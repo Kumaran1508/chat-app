@@ -3,6 +3,7 @@ package com.teknophase.chat.navigation
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -17,8 +18,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.teknophase.chat.ui.screens.ChatListScreen
-import com.teknophase.chat.ui.theme.AccentLight
-import com.teknophase.chat.ui.theme.PrimaryBlue
 
 // TODO: To be implemented
 @Composable
@@ -42,8 +41,8 @@ fun AppNavHost() {
                             navController.navigate(screen.route)
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = PrimaryBlue,
-                            unselectedIconColor = AccentLight
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onBackground
                         )
                     )
                 }
