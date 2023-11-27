@@ -97,17 +97,6 @@ fun ButtonPreviews() {
                     .fillMaxWidth()
                     .padding(top = 10.dp)
             ) {}
-
-//            LinearProgressIndicator(
-//                modifier = Modifier
-//                    .padding(top = 10.dp)
-//                    .height(8.dp)
-//                    .clip(RoundedCornerShape(5.dp))
-//                    .align(CenterHorizontally),
-//                color = MaterialTheme.colorScheme.primary,
-//                trackColor = MaterialTheme.colorScheme.surface,
-//                progress = 0.23f
-//            )
         }
     }
 }

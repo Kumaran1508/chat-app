@@ -19,3 +19,4 @@ val onSurfaceVariant = Color(0xFFADB0B5)
 val onBackground = Color(0xFF888888)
 
 val errorRed = Color(0xFFB3261E)
+val progressBarTrackColor = Color(0xFFD9D9D9)
