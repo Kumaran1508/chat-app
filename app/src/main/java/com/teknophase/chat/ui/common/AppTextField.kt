@@ -80,9 +80,10 @@ fun AppTextField(
                 unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                 focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                focusedContainerColor=MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor=MaterialTheme.colorScheme.surfaceVariant,
-                disabledContainerColor=MaterialTheme.colorScheme.surface,
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                disabledContainerColor = MaterialTheme.colorScheme.surface,
+                errorIndicatorColor = Color.Transparent
             ),
             shape = RoundedCornerShape(56.dp),
             isError = isError,
@@ -101,7 +102,7 @@ fun AppTextField(
             minLines = minLines,
             interactionSource = interactionSource
         )
-        if (errorText != null) {
+        if (errorText != null && isError) {
             Text(
                 text = errorText,
                 modifier = Modifier.padding(start = 24.dp, top = 4.dp),
