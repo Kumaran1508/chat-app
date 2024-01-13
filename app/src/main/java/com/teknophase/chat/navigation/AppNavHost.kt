@@ -16,10 +16,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.teknophase.chat.ui.auth.LoginScreen
+import com.teknophase.chat.ui.auth.RegistrationScreen
 import com.teknophase.chat.ui.screens.ChatListScreen
 
-// TODO: To be implemented
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
@@ -27,36 +29,59 @@ fun AppNavHost() {
     val currentDestination = navBackStackEntry?.destination
     Scaffold(
         bottomBar = {
-            NavigationBar(modifier = Modifier.height(64.dp)) {
-                AppNavRoutes.values().forEach { screen ->
-                    NavigationBarItem(
-                        icon = {
-                            Icon(
-                                painterResource(id = screen.icon),
-                                contentDescription = null
+            if (navController.currentDestination?.route?.contains(AppNavRoutes.BOTTOM_NAVIGATION.route) == true)
+                NavigationBar(modifier = Modifier.height(64.dp)) {
+                    BottomNavRoutes.values().forEach { screen ->
+                        NavigationBarItem(
+                            icon = {
+                                Icon(
+                                    painterResource(id = screen.icon),
+                                    contentDescription = null
+                                )
+                            },
+                            selected = currentDestination?.route == screen.route,
+                            onClick = {
+                                navController.navigate(screen.route)
+                            },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                unselectedIconColor = MaterialTheme.colorScheme.onBackground
                             )
-                        },
-                        selected = currentDestination?.route == screen.route,
-                        onClick = {
-                            navController.navigate(screen.route)
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            unselectedIconColor = MaterialTheme.colorScheme.onBackground
                         )
-                    )
+                    }
                 }
-            }
         }
     ) { innerPadding ->
         NavHost(
             navController,
-            startDestination = AppNavRoutes.CHAT.route,
+            startDestination = AppNavRoutes.LOGIN.route,
             Modifier.padding(innerPadding)
         ) {
-            composable(AppNavRoutes.CHAT.route) { ChatListScreen(navController = navController) }
-            composable(AppNavRoutes.CALLS.route) { ChatListScreen(navController = navController) }
-            composable(AppNavRoutes.PROFILE.route) { ChatListScreen(navController = navController) }
+            navigation(
+                route = AppNavRoutes.BOTTOM_NAVIGATION.route,
+                startDestination = BottomNavRoutes.CHAT.route
+            ) {
+                composable(BottomNavRoutes.CHAT.route) { ChatListScreen(navController = navController) }
+                composable(BottomNavRoutes.CALLS.route) { ChatListScreen(navController = navController) }
+                composable(BottomNavRoutes.PROFILE.route) { ChatListScreen(navController = navController) }
+            }
+
+            composable(AppNavRoutes.LOGIN.route) {
+                LoginScreen(onNavigate = {
+                    navController.navigate(
+                        it
+                    )
+                })
+            }
+
+            composable(AppNavRoutes.REGISTER.route) {
+                RegistrationScreen(
+                    onNavigate = {},
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
     }
 }

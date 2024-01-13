@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.teknophase.chat.ui.constants.size_48
 import com.teknophase.chat.ui.theme.ChatTheme
 
 @Composable
@@ -35,8 +36,8 @@ fun PrimaryButton(
 ) {
     Button(
         onClick = onClick,
-        shape = RoundedCornerShape(48.dp), // TODO: Magic Numbers
-        modifier = modifier.height(48.dp),
+        shape = RoundedCornerShape(size_48),
+        modifier = modifier.height(size_48),
         enabled = enabled,
         elevation = elevation,
         contentPadding = contentPadding,
@@ -97,17 +98,6 @@ fun ButtonPreviews() {
                     .fillMaxWidth()
                     .padding(top = 10.dp)
             ) {}
-
-//            LinearProgressIndicator(
-//                modifier = Modifier
-//                    .padding(top = 10.dp)
-//                    .height(8.dp)
-//                    .clip(RoundedCornerShape(5.dp))
-//                    .align(CenterHorizontally),
-//                color = MaterialTheme.colorScheme.primary,
-//                trackColor = MaterialTheme.colorScheme.surface,
-//                progress = 0.23f
-//            )
         }
     }
 }

@@ -55,7 +55,7 @@ fun AppTextField(
     minLines: Int = 1,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
-    Column {
+    Column(modifier = modifier) {
         Text(
             text = title,
             color = MaterialTheme.colorScheme.primary,
@@ -79,7 +79,11 @@ fun AppTextField(
                 focusedTextColor = MaterialTheme.colorScheme.onSurface,
                 unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                 focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
+                unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                disabledContainerColor = MaterialTheme.colorScheme.surface,
+                errorIndicatorColor = Color.Transparent
             ),
             shape = RoundedCornerShape(56.dp),
             isError = isError,
@@ -96,10 +100,9 @@ fun AppTextField(
             singleLine = singleLine,
             maxLines = maxLines,
             minLines = minLines,
-            interactionSource = interactionSource,
-            modifier = modifier
+            interactionSource = interactionSource
         )
-        if (errorText != null) {
+        if (errorText != null && isError) {
             Text(
                 text = errorText,
                 modifier = Modifier.padding(start = 24.dp, top = 4.dp),
@@ -112,7 +115,7 @@ fun AppTextField(
 }
 
 @Preview(uiMode = UI_MODE_NIGHT_YES)
-@Preview()
+@Preview
 @Composable
 fun AppTextFieldPreview() {
     ChatTheme {
