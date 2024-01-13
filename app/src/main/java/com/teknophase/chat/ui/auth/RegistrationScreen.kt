@@ -47,8 +47,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.teknophase.chat.R
 import com.teknophase.chat.data.request.AuthRequest
 import com.teknophase.chat.data.request.RegisterRequest
+import com.teknophase.chat.data.request.UpdateProfileRequest
 import com.teknophase.chat.data.response.AuthResponse
-import com.teknophase.chat.navigation.AppNavRoutes
+import com.teknophase.chat.navigation.BottomNavRoutes
 import com.teknophase.chat.network.repositories.AuthRepository
 import com.teknophase.chat.ui.common.PrimaryButton
 import com.teknophase.chat.ui.common.SecondaryButton
@@ -58,10 +59,10 @@ import com.teknophase.chat.ui.constants.padding_small
 import com.teknophase.chat.ui.constants.size_05
 import com.teknophase.chat.ui.constants.size_08
 import com.teknophase.chat.ui.constants.size_100
+import com.teknophase.chat.ui.constants.size_50
 import com.teknophase.chat.ui.theme.ChatTheme
 import com.teknophase.chat.ui.theme.progressBarTrackColor
 import com.teknophase.chat.viewmodel.RegisterViewModel
-import retrofit2.Response
 
 const val MAX_PAGES = 4
 const val MIN_PROGRESS = 0.08f
@@ -70,7 +71,7 @@ const val MIN_PROGRESS = 0.08f
 fun RegistrationScreen(
     viewModel: RegisterViewModel = hiltViewModel(),
     onNavigate: (String) -> Unit,
-    onNavigateBack: ()-> Unit
+    onNavigateBack: () -> Unit
 ) {
     val registerState = viewModel.registerState.collectAsState()
     val step = registerState.value.registrationPage
@@ -88,7 +89,7 @@ fun RegistrationScreen(
 
     BackHandler {
         if (registerState.value.registrationPage == 1)
-           onNavigateBack()     //context.finish()
+            onNavigateBack()     //context.finish()
         else {
             animationDirection = -1
             viewModel.goToPreviousPage()
@@ -147,7 +148,7 @@ fun RegistrationScreen(
             painter = painterResource(id = R.drawable.pyng_logo_onboarding),
             contentDescription = null,
             modifier = Modifier
-                .padding(vertical = size_100)
+                .padding(vertical = size_50)
                 .align(CenterHorizontally)
         )
 
@@ -178,17 +179,18 @@ fun RegistrationScreen(
         Spacer(modifier = Modifier.weight(FULL_WEIGHT))
 
         if (registerState.value.registrationPage < MAX_PAGES) {
-            if(registerState.value.isLoading) {
+            if (registerState.value.isLoading) {
                 CircularProgressIndicator()
             } else {
                 PrimaryButton(
                     text = stringResource(R.string.next),
                     modifier = Modifier
                         .padding(bottom = padding_medium)
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
+                    enabled = registerState.value.isValid
                 ) {
                     animationDirection = 1
-                    viewModel.goToNextPage()
+                    viewModel.goToNextPage(context.applicationContext)
                 }
             }
 
@@ -207,7 +209,10 @@ fun RegistrationScreen(
                 modifier = Modifier
                     .padding(bottom = padding_medium)
                     .fillMaxWidth()
-            ) { }
+            ) {
+                viewModel.updateProfile(context.baseContext)
+                onNavigate(BottomNavRoutes.CHAT.route)
+            }
         }
     }
 }
@@ -218,16 +223,20 @@ fun RegistrationScreen(
 fun RegistrationScreenPreview() {
     ChatTheme {
         RegistrationScreen(
-            viewModel = RegisterViewModel(object: AuthRepository{
-                override suspend fun login(user: AuthRequest): Response<AuthResponse> {
+            viewModel = RegisterViewModel(object : AuthRepository {
+                override suspend fun login(user: AuthRequest): AuthResponse {
                     TODO("Not yet implemented")
                 }
 
-                override suspend fun register(user: RegisterRequest): Response<Boolean> {
+                override suspend fun register(user: RegisterRequest): Boolean {
                     TODO("Not yet implemented")
                 }
 
-                override suspend fun checkUsernameAvailability(username: String): Response<Boolean> {
+                override suspend fun checkUsernameAvailability(username: String): Boolean {
+                    TODO("Not yet implemented")
+                }
+
+                override suspend fun updateUserProfile(profileRequest: UpdateProfileRequest): Boolean {
                     TODO("Not yet implemented")
                 }
 

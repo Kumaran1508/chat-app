@@ -20,6 +20,7 @@ class LoginViewModel @Inject constructor() : ViewModel() {
     }
 
     fun onForgotPasswordClicked() {
+        //TODO: To be Implemented
     }
 }
 

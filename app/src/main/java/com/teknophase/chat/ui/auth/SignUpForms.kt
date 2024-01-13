@@ -17,12 +17,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +33,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
@@ -39,27 +43,34 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.teknophase.chat.R
-import com.teknophase.chat.util.getFormattedPhoneNumber
 import com.teknophase.chat.navigation.AppNavRoutes
 import com.teknophase.chat.ui.common.AppTextField
+import com.teknophase.chat.ui.common.OtpTextField
 import com.teknophase.chat.ui.constants.CountryCodes
 import com.teknophase.chat.ui.constants.FULL_WEIGHT
 import com.teknophase.chat.ui.constants.padding_large
 import com.teknophase.chat.ui.constants.padding_medium
 import com.teknophase.chat.ui.constants.size_120
 import com.teknophase.chat.ui.constants.size_150
+import com.teknophase.chat.ui.constants.size_20
 import com.teknophase.chat.ui.constants.size_200
 import com.teknophase.chat.ui.constants.size_250
 import com.teknophase.chat.ui.constants.size_50
 import com.teknophase.chat.ui.constants.text_normal
 import com.teknophase.chat.ui.constants.text_small
 import com.teknophase.chat.ui.theme.ChatTheme
+import com.teknophase.chat.ui.theme.errorRed
+import com.teknophase.chat.ui.theme.successGreen
+import com.teknophase.chat.util.getFormattedPhoneNumber
 import com.teknophase.chat.viewmodel.RegisterViewModel
+import com.teknophase.chat.viewmodel.mobileRegex
+import com.teknophase.chat.viewmodel.passwordRegex
 
 @Composable
 fun SignUpForm1(
@@ -79,7 +90,6 @@ fun SignUpForm1(
         }
         var selectedCode: CountryCodes
         var phoneNumber = remember { mutableStateOf("") }
-        val pattern = Regex("^((\\(\\d{2,3}\\))|(\\d{3}\\-))?(\\(0\\d{2,3}\\)|0\\d{2,3}-)?[1-9]\\d{6,7}(\\-\\d{1,4})?\$")
 
 
         Box(modifier = Modifier) {
@@ -130,12 +140,14 @@ fun SignUpForm1(
                 value = search,
 //                readOnly = true,
                 onValueChange = {
-                    search = it
-                    isExpanded = true
-                    val filtered: List<CountryCodes> = CountryCodes.values().filter { country ->
-                        country.code.contains(it)
+                    if (it.length < 4) {
+                        search = it
+                        isExpanded = true
+                        val filtered: List<CountryCodes> = CountryCodes.values().filter { country ->
+                            country.code.contains(it)
+                        }
+                        filteredCountries = filtered.toTypedArray()
                     }
-                    filteredCountries = filtered.toTypedArray()
                 },
                 singleLine = true,
                 modifier = Modifier
@@ -168,8 +180,10 @@ fun SignUpForm1(
                 title = stringResource(R.string.mobile_number),
                 value = state.value.mobileNumber.toString(),
                 onValueChange = {
-                    registerViewModel.changeMobileNumber(it)
-                    phoneNumber.value = getFormattedPhoneNumber(search,it)
+                    if (it.length < 14) {
+                        registerViewModel.changeMobileNumber(it)
+                        phoneNumber.value = getFormattedPhoneNumber(search, it)
+                    }
                 },
                 modifier = Modifier
                     .padding(top = padding_large)
@@ -184,7 +198,7 @@ fun SignUpForm1(
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 singleLine = true,
-                isError = !pattern.matches(phoneNumber.value),
+                isError = !mobileRegex.matches(phoneNumber.value),
                 errorText = stringResource(R.string.invalid_phone_number)
             )
         }
@@ -195,30 +209,27 @@ fun SignUpForm1(
 fun SignUpForm2(registerViewModel: RegisterViewModel = hiltViewModel()) {
     val state = registerViewModel.registerState.collectAsState()
     Column {
-        AppTextField(
-            title = stringResource(R.string.enter_otp),
-            value = state.value.otp.toString(),
-            onValueChange = { registerViewModel.changeOTP(it) },
-            modifier = Modifier
-                .padding(top = padding_large)
-                .align(CenterHorizontally),
-            placeholder = stringResource(R.string.otp_placeholder),
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.icon_numbers),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
+        val focusRequester = FocusRequester()
+        OtpTextField(
+            otpText = state.value.otp.toString(),
+            onOtpTextChange = { value, _ ->
+                registerViewModel.changeOTP(value)
             },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            singleLine = true,
+            modifier = Modifier.focusRequester(focusRequester)
         )
+
+        LaunchedEffect(focusRequester) {
+            focusRequester.requestFocus()
+        }
     }
 }
 
 @Composable
 fun SignUpForm3(registerViewModel: RegisterViewModel = hiltViewModel()) {
     val state = registerViewModel.registerState.collectAsState()
+    val usernameValid = state.value.username.toString().length in 4..20
+    val usernameUnavailableMessage = stringResource(R.string.username_not_available)
+    val usernameInvalidMessage = stringResource(R.string.invalid_username)
     Column {
         AppTextField(
             title = stringResource(id = R.string.title_username),
@@ -235,10 +246,38 @@ fun SignUpForm3(registerViewModel: RegisterViewModel = hiltViewModel()) {
                     modifier = Modifier.padding(start = padding_medium)
                 )
             },
+            trailingIcon = {
+                if (state.value.checkingUsername) {
+                    CircularProgressIndicator(modifier = Modifier.size(size_20))
+                } else if (state.value.username.toString().isNotEmpty()) {
+                    val color = if (state.value.usernameAvailable) successGreen else errorRed
+                    val icon =
+                        if (state.value.usernameAvailable) R.drawable.icon_success else R.drawable.icon_cancel
+                    Icon(
+                        painter = painterResource(id = icon),
+                        contentDescription = null,
+                        tint = color
+                    )
+                }
+            },
             singleLine = true,
+            isError = !usernameValid || !state.value.usernameAvailable,
+            errorText = if (!usernameValid) usernameInvalidMessage
+            else if (!state.value.usernameAvailable) usernameUnavailableMessage
+            else ""
+        )
+        Text(
+            text = stringResource(R.string.username_support_text),
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = text_small
+        )
 
-            )
-
+        val passwordVisualisation = remember {
+            mutableStateOf<VisualTransformation>(PasswordVisualTransformation())
+        }
+        val visualIcon = remember {
+            mutableStateOf(R.drawable.icon_visible)
+        }
         AppTextField(
             title = stringResource(id = R.string.title_password),
             value = state.value.password.toString(),
@@ -256,12 +295,23 @@ fun SignUpForm3(registerViewModel: RegisterViewModel = hiltViewModel()) {
             },
             trailingIcon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.icon_visible),
+                    painter = painterResource(id = visualIcon.value),
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onBackground
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.clickable {
+                        if (passwordVisualisation.value is PasswordVisualTransformation) {
+                            passwordVisualisation.value = VisualTransformation.None
+                            visualIcon.value = R.drawable.icon_invisible
+                        } else {
+                            passwordVisualisation.value = PasswordVisualTransformation()
+                            visualIcon.value = R.drawable.icon_visible
+                        }
+                    }
                 )
             },
-            visualTransformation = PasswordVisualTransformation()
+            visualTransformation = passwordVisualisation.value,
+            isError = !passwordRegex.matches(state.value.password.toString()),
+            errorText = stringResource(R.string.invalid_password)
         )
 
         AppTextField(
@@ -281,12 +331,23 @@ fun SignUpForm3(registerViewModel: RegisterViewModel = hiltViewModel()) {
             },
             trailingIcon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.icon_visible),
+                    painter = painterResource(id = visualIcon.value),
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onBackground
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.clickable {
+                        if (passwordVisualisation.value is PasswordVisualTransformation) {
+                            passwordVisualisation.value = VisualTransformation.None
+                            visualIcon.value = R.drawable.icon_invisible
+                        } else {
+                            passwordVisualisation.value = PasswordVisualTransformation()
+                            visualIcon.value = R.drawable.icon_visible
+                        }
+                    }
                 )
             },
-            visualTransformation = PasswordVisualTransformation()
+            visualTransformation = passwordVisualisation.value,
+            isError = state.value.password != state.value.repeatPassword,
+            errorText = stringResource(R.string.unmatched_passwords)
         )
     }
 }

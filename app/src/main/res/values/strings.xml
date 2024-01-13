@@ -24,4 +24,9 @@
     <string name="skip">Skip</string>
     <string name="invalid_country_code">Invalid Code</string>
     <string name="invalid_phone_number">Invalid Phone Number</string>
+    <string name="username_not_available">Username not available</string>
+    <string name="invalid_username">Invalid username</string>
+    <string name="invalid_password">Invalid Password</string>
+    <string name="username_support_text">"Username must be between 4 to 20 characters"</string>
+    <string name="unmatched_passwords">Passwords does not match</string>
 </resources>
