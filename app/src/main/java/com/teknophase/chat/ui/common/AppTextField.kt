@@ -26,6 +26,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.teknophase.chat.ui.constants.size_56
 import com.teknophase.chat.ui.theme.ChatTheme
 import com.teknophase.chat.ui.theme.PrimaryBlue
 import com.teknophase.chat.ui.theme.errorRed
@@ -85,7 +86,7 @@ fun AppTextField(
                 disabledContainerColor = MaterialTheme.colorScheme.surface,
                 errorIndicatorColor = Color.Transparent
             ),
-            shape = RoundedCornerShape(56.dp),
+            shape = RoundedCornerShape(size_56),
             isError = isError,
             leadingIcon = leadingIcon,
             trailingIcon = trailingIcon,

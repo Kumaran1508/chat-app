@@ -7,6 +7,7 @@ val size_02 = 2.dp
 val size_05 = 5.dp
 val size_06 = 6.dp
 val size_08 = 8.dp
+val size_11 = 11.dp
 val size_16 = 16.dp
 val size_20 = 20.dp
 val size_40 = 40.dp
@@ -19,6 +20,7 @@ val size_120 = 120.dp
 val size_150 = 150.dp
 val size_200 = 200.dp
 val size_250 = 250.dp
+val size_300 = 300.dp
 
 val form_field_width = 275.dp
 
