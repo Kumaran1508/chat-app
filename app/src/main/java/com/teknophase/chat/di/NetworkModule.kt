@@ -6,7 +6,6 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import retrofit2.Retrofit
 import javax.inject.Named
 
 @Module
@@ -14,12 +13,13 @@ import javax.inject.Named
 object NetworkModule {
     @Provides
     @Named("ApiBaseDomain")
-    fun providesBaseDomain() : String {
+    fun providesBaseDomain(): String {
         return "http://192.168.29.84:3000/"
+//        return "http://172.19.101.193:3000/"  // Presidio IP
     }
 
     @Provides
-    fun providesAuthService(@Named("ApiBaseDomain") baseDomain: String) : AuthService {
+    fun providesAuthService(@Named("ApiBaseDomain") baseDomain: String): AuthService {
         return RetrofitInstance.build(baseDomain).create(AuthService::class.java)
     }
 }

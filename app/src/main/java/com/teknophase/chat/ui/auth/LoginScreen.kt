@@ -1,8 +1,10 @@
 package com.teknophase.chat.ui.auth
 
+import android.app.Activity
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.widget.Toast
 import android.widget.Toast.LENGTH_SHORT
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -29,6 +33,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
@@ -36,8 +41,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.teknophase.chat.R
+import com.teknophase.chat.data.request.AuthRequest
+import com.teknophase.chat.data.request.RegisterRequest
+import com.teknophase.chat.data.request.UpdateProfileRequest
+import com.teknophase.chat.data.response.AuthResponse
 import com.teknophase.chat.navigation.AppNavRoutes
 import com.teknophase.chat.navigation.BottomNavRoutes
+import com.teknophase.chat.network.repositories.AuthRepository
 import com.teknophase.chat.ui.common.AppTextField
 import com.teknophase.chat.ui.common.PrimaryButton
 import com.teknophase.chat.ui.constants.CREATE_ACCOUNT_TAG
@@ -51,6 +61,9 @@ import com.teknophase.chat.ui.constants.text_normal
 import com.teknophase.chat.ui.constants.text_small
 import com.teknophase.chat.ui.theme.ChatTheme
 import com.teknophase.chat.viewmodel.LoginViewModel
+import com.teknophase.chat.viewmodel.USERNAME_MAX_LENGTH
+import com.teknophase.chat.viewmodel.USERNAME_MIN_LENGTH
+import com.teknophase.chat.viewmodel.passwordRegex
 
 @Composable
 fun LoginScreen(
@@ -62,7 +75,19 @@ fun LoginScreen(
         mutableStateOf(false)
     }
     val user = loginViewModel.user.collectAsState()
+    val isLoading = loginViewModel.isLoading.collectAsState()
+    var isUsernameError by remember {
+        mutableStateOf(false)
+    }
+    var isPasswordError by remember {
+        mutableStateOf(false)
+    }
     val context = LocalContext.current
+
+    BackHandler {
+        val activity = context as Activity
+        activity.finish()
+    }
 
     val registerAnnotation = buildAnnotatedString {
         withStyle(
@@ -89,14 +114,14 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = MaterialTheme.colorScheme.background)
+            .background(color = MaterialTheme.colorScheme.background),
+        horizontalAlignment = CenterHorizontally
     ) {
         Image(
             painter = painterResource(id = R.drawable.pyng_logo_onboarding),
             contentDescription = null,
             modifier = Modifier
                 .padding(vertical = size_100)
-                .align(CenterHorizontally)
         )
 
         AppTextField(
@@ -104,10 +129,12 @@ fun LoginScreen(
             value = user.value.username,
             onValueChange = {
                 loginViewModel.onUsernameChange(it)
+                isUsernameError =
+                    it.length !in USERNAME_MIN_LENGTH..USERNAME_MAX_LENGTH
             },
-            modifier = Modifier
-                .align(CenterHorizontally),
             placeholder = stringResource(R.string.type_something),
+            maxLines = 1,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.icon_username),
@@ -115,7 +142,9 @@ fun LoginScreen(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = padding_medium)
                 )
-            }
+            },
+            isError = isUsernameError,
+            errorText = stringResource(id = R.string.invalid_username)
         )
 
         AppTextField(
@@ -123,11 +152,13 @@ fun LoginScreen(
             value = user.value.password,
             onValueChange = {
                 loginViewModel.onPasswordChange(it)
+                isPasswordError = !passwordRegex.matches(it)
             },
             modifier = Modifier
-                .padding(top = padding_large)
-                .align(CenterHorizontally),
+                .padding(top = padding_large),
             placeholder = stringResource(id = R.string.type_something),
+            maxLines = 1,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             leadingIcon = {
                 Icon(
                     painter = painterResource(id = R.drawable.icon_password),
@@ -153,7 +184,9 @@ fun LoginScreen(
                 PasswordVisualTransformation()
             } else {
                 VisualTransformation.None
-            }
+            },
+            isError = isPasswordError,
+            errorText = stringResource(id = R.string.invalid_password)
         )
 
         ClickableText(
@@ -163,8 +196,7 @@ fun LoginScreen(
                 fontSize = text_normal
             ),
             modifier = Modifier
-                .padding(top = padding_large)
-                .align(CenterHorizontally),
+                .padding(top = padding_large),
             onClick = { Toast.makeText(context, NOT_IMPLEMENTED, LENGTH_SHORT).show() },
         )
 
@@ -173,8 +205,7 @@ fun LoginScreen(
         ClickableText(
             text = registerAnnotation,
             modifier = Modifier
-                .padding(vertical = padding_extra_large)
-                .align(CenterHorizontally),
+                .padding(vertical = padding_extra_large),
             style = TextStyle(
                 fontSize = text_small
             ),
@@ -190,14 +221,17 @@ fun LoginScreen(
             }
         )
 
-        PrimaryButton(
+        if (isLoading.value) CircularProgressIndicator()
+        else PrimaryButton(
             text = stringResource(R.string.login),
             modifier = Modifier
                 .width(form_field_width)
-                .padding(bottom = padding_extra_large)
-                .align(CenterHorizontally)
+                .padding(bottom = padding_extra_large),
+            enabled = !isUsernameError && !isPasswordError
         ) {
-            onNavigate(BottomNavRoutes.CALLS.route)
+            loginViewModel.onLoginClicked(context) {
+                onNavigate(BottomNavRoutes.CHAT.route)
+            }
         }
     }
 }
@@ -209,7 +243,23 @@ fun LoginScreen(
 fun LoginFormPreview() {
     ChatTheme {
         LoginScreen(
-            loginViewModel = LoginViewModel(),
+            loginViewModel = LoginViewModel(authRepository = object : AuthRepository {
+                override suspend fun login(user: AuthRequest): AuthResponse {
+                    TODO("Not yet implemented")
+                }
+
+                override suspend fun register(user: RegisterRequest): Boolean {
+                    TODO("Not yet implemented")
+                }
+
+                override suspend fun checkUsernameAvailability(username: String): Boolean {
+                    TODO("Not yet implemented")
+                }
+
+                override suspend fun updateUserProfile(profileRequest: UpdateProfileRequest): Boolean {
+                    TODO("Not yet implemented")
+                }
+            }),
             onNavigate = {}
         )
     }
