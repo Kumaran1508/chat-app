@@ -12,14 +12,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import com.teknophase.chat.R
+import com.teknophase.chat.providers.AuthState
 import com.teknophase.chat.ui.auth.LoginScreen
 import com.teknophase.chat.ui.auth.RegistrationScreen
+import com.teknophase.chat.ui.common.AppTopBar
+import com.teknophase.chat.ui.constants.size_64
 import com.teknophase.chat.ui.screens.ChatListScreen
 
 @Composable
@@ -30,7 +34,7 @@ fun AppNavHost() {
     Scaffold(
         bottomBar = {
             if (navController.currentDestination?.route?.contains(AppNavRoutes.BOTTOM_NAVIGATION.route) == true)
-                NavigationBar(modifier = Modifier.height(64.dp)) {
+                NavigationBar(modifier = Modifier.height(size_64)) {
                     BottomNavRoutes.values().forEach { screen ->
                         NavigationBarItem(
                             icon = {
@@ -50,6 +54,19 @@ fun AppNavHost() {
                         )
                     }
                 }
+        },
+        topBar = {
+            var title = stringResource(id = R.string.app_name)
+            for (page in BottomNavRoutes.values()) {
+                if (page.route == navController.currentDestination?.route) {
+                    title = page.title
+                }
+            }
+            if (navController.currentDestination?.route?.contains(AppNavRoutes.BOTTOM_NAVIGATION.route) == true)
+                AppTopBar(
+                    title = title,
+                    onNavigate = { navController.navigate(it) }
+                )
         }
     ) { innerPadding ->
         NavHost(
@@ -67,7 +84,8 @@ fun AppNavHost() {
             }
 
             composable(AppNavRoutes.LOGIN.route) {
-                LoginScreen(onNavigate = {
+                if (AuthState.isLoggedIn()) navController.navigate(BottomNavRoutes.CHAT.route)
+                else LoginScreen(onNavigate = {
                     navController.navigate(
                         it
                     )

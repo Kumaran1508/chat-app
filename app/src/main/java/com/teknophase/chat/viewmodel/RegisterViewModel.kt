@@ -24,6 +24,9 @@ val mobileRegex =
 val passwordRegex =
     Regex("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@\$!%*?&])[A-Za-z\\d@\$!%*?&]{8,20}\$")
 
+const val USERNAME_MIN_LENGTH = 4
+const val USERNAME_MAX_LENGTH = 24
+
 @HiltViewModel
 class RegisterViewModel @Inject constructor(private val authRepository: AuthRepository) :
     ViewModel() {
@@ -69,7 +72,10 @@ class RegisterViewModel @Inject constructor(private val authRepository: AuthRepo
                                     )
                                 )
                                 if (registered) _registerState.value =
-                                    _registerState.value.copy(isValid = true, registrationPage = 4)
+                                    _registerState.value.copy(
+                                        isValid = true,
+                                        registrationPage = USERNAME_MIN_LENGTH
+                                    )
                                 else {
                                     _registerState.value =
                                         _registerState.value.copy(isValid = false)
@@ -163,7 +169,8 @@ class RegisterViewModel @Inject constructor(private val authRepository: AuthRepo
         val password = _registerState.value.password
         val repeatPassword = _registerState.value.repeatPassword
         var valid = true
-        if (username.toString().length < 4 || username.toString().length > 24) valid = false
+        if (username.toString().length < USERNAME_MIN_LENGTH || username.toString().length > USERNAME_MAX_LENGTH) valid =
+            false
         if (!passwordRegex.matches(password.toString())) valid = false
         if (password.toString() != repeatPassword.toString()) valid = false
         _registerState.value = _registerState.value.copy(isValid = valid)
@@ -215,7 +222,7 @@ class RegisterViewModel @Inject constructor(private val authRepository: AuthRepo
                     )
                 )
                 if (!isUpdated) GlobalScope.launch(Dispatchers.Main) {
-                    Toast.makeText(context, "Profile Update Failed", Toast.LENGTH_LONG)
+                    Toast.makeText(context, "Profile Update Failed", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 Log.e("Profile Error", "Error on Updating Profile")

@@ -14,8 +14,8 @@ import dagger.hilt.components.SingletonComponent
 object AppModule {
 
     @Provides
-    fun providesLoginViewModel(): LoginViewModel {
-        return LoginViewModel()
+    fun providesLoginViewModel(authRepository: AuthRepository): LoginViewModel {
+        return LoginViewModel(authRepository)
     }
 
     @Provides
