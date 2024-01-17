@@ -34,7 +34,7 @@ import com.teknophase.chat.ui.theme.onBackground
 
 @Composable
 fun AppTextField(
-    title: String,
+    title: String?,
     value: String,
     modifier: Modifier = Modifier,
     placeholder: String? = null,
@@ -57,14 +57,16 @@ fun AppTextField(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
     Column(modifier = modifier) {
-        Text(
-            text = title,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 24.dp, bottom = 4.dp),
-            style = TextStyle(
-                fontSize = 16.sp, fontWeight = FontWeight.Bold
+        if (title.toString().isNotEmpty()) {
+            Text(
+                text = title.toString(),
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 24.dp, bottom = 4.dp),
+                style = TextStyle(
+                    fontSize = 16.sp, fontWeight = FontWeight.Bold
+                )
             )
-        )
+        }
         TextField(
             value = value,
             placeholder = {
@@ -101,7 +103,8 @@ fun AppTextField(
             singleLine = singleLine,
             maxLines = maxLines,
             minLines = minLines,
-            interactionSource = interactionSource
+            interactionSource = interactionSource,
+            modifier = modifier
         )
         if (errorText != null && isError) {
             Text(

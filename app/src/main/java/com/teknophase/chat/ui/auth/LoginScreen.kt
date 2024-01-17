@@ -47,6 +47,7 @@ import com.teknophase.chat.data.request.UpdateProfileRequest
 import com.teknophase.chat.data.response.AuthResponse
 import com.teknophase.chat.navigation.AppNavRoutes
 import com.teknophase.chat.navigation.BottomNavRoutes
+import com.teknophase.chat.network.SocketManager
 import com.teknophase.chat.network.repositories.AuthRepository
 import com.teknophase.chat.ui.common.AppTextField
 import com.teknophase.chat.ui.common.PrimaryButton
@@ -230,6 +231,7 @@ fun LoginScreen(
             enabled = !isUsernameError && !isPasswordError
         ) {
             loginViewModel.onLoginClicked(context) {
+                SocketManager.getSocket()
                 onNavigate(BottomNavRoutes.CHAT.route)
             }
         }

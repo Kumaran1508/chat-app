@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.teknophase.chat.navigation.AppNavHost
+import com.teknophase.chat.network.SocketManager
 import com.teknophase.chat.providers.AuthState
 import com.teknophase.chat.providers.UserMetaData
 import com.teknophase.chat.ui.theme.ChatTheme
@@ -48,7 +49,13 @@ class MainActivity : ComponentActivity() {
                 authToken,
                 UserMetaData(username = username.toString(), userId = userId.toString())
             )
+            SocketManager.getSocket()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        SocketManager.getSocket().disconnect()
     }
 }
 

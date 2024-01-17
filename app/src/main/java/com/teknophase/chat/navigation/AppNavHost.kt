@@ -13,11 +13,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.teknophase.chat.R
 import com.teknophase.chat.providers.AuthState
 import com.teknophase.chat.ui.auth.LoginScreen
@@ -25,6 +27,7 @@ import com.teknophase.chat.ui.auth.RegistrationScreen
 import com.teknophase.chat.ui.common.AppTopBar
 import com.teknophase.chat.ui.constants.size_64
 import com.teknophase.chat.ui.screens.ChatListScreen
+import com.teknophase.chat.ui.screens.ChatScreen
 
 @Composable
 fun AppNavHost() {
@@ -99,6 +102,14 @@ fun AppNavHost() {
                         navController.popBackStack()
                     }
                 )
+            }
+
+            composable(
+                AppNavRoutes.CHAT.route,
+                arguments = listOf(navArgument("username") { type = NavType.StringType })
+            ) { entry ->
+                val username = entry.arguments?.getString("username")!!
+                ChatScreen(username = username)
             }
         }
     }

@@ -24,6 +24,7 @@ val size_300 = 300.dp
 
 val form_field_width = 275.dp
 
+val padding_extra_small = 4.dp
 val padding_small = 8.dp
 val padding_medium = 16.dp
 val padding_large = 24.dp

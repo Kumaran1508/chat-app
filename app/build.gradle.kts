@@ -79,6 +79,7 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.googlecode.libphonenumber:libphonenumber:8.13.26")
     implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("io.socket:socket.io-client:2.1.0")
 }
 
 // Allow references to generated code
