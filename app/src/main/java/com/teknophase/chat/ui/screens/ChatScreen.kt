@@ -19,30 +19,38 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.Start
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.teknophase.chat.R
-import com.teknophase.chat.data.model.Message
-import com.teknophase.chat.data.model.MessageDestinationType
 import com.teknophase.chat.data.state.ChatHeaderState
+import com.teknophase.chat.network.SocketManager
 import com.teknophase.chat.providers.AuthState
 import com.teknophase.chat.ui.chat.ChatHeader
 import com.teknophase.chat.ui.chat.MessageComposable
 import com.teknophase.chat.ui.common.AppTextField
+import com.teknophase.chat.ui.common.InfoBanner
 import com.teknophase.chat.ui.constants.padding_small
 import com.teknophase.chat.ui.constants.size_48
 import com.teknophase.chat.ui.constants.size_64
 import com.teknophase.chat.ui.theme.PrimaryBlueVariant
+import com.teknophase.chat.ui.theme.errorRed
 import com.teknophase.chat.viewmodel.ChatViewModel
+import com.teknophase.chat.viewmodel.HomeViewModel
 
 @Composable
-fun ChatScreen(viewModel: ChatViewModel = hiltViewModel(), username: String) {
-    val state = viewModel.chatState.collectAsState()
+fun ChatScreen(
+    homeViewModel: HomeViewModel = hiltViewModel(),
+    viewModel: ChatViewModel = hiltViewModel(),
+    username: String
+) {
+    val state = homeViewModel.chatState.collectAsState()
     val headerState = viewModel.chatHeaderState.collectAsState()
     val currentUser = AuthState.getUser()?.username.toString()
+    val isConnected = SocketManager.isConnected.collectAsState()
 
     LaunchedEffect(key1 = null) {
         viewModel.setHeader(ChatHeaderState(receiverUsername = username))
@@ -51,31 +59,21 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel(), username: String) {
     Column(modifier = Modifier.fillMaxSize()) {
         ChatHeader(chatHeaderState = headerState.value)
 
+        if (!isConnected.value) InfoBanner(info = stringResource(R.string.offline), errorRed)
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(padding_small)
         ) {
-            items(state.value.sendQueue.size) { index ->
-                val message = state.value.sendQueue[index]
-                MessageComposable(
-                    message = Message(
-                        messageId = "",
-                        source = message.sender,
-                        destination = message.receiver,
-                        destinationType = MessageDestinationType.values()[message.destinationType],
-                        content = message.content,
-                        sentAt = message.sentAt
-                    ),
-                    isSent = true
-                )
-                Spacer(modifier = Modifier.height(padding_small))
-            }
-
             items(state.value.messages.size) { index ->
                 val message = state.value.messages[index]
-                MessageComposable(message = message, isSent = message.source == currentUser)
+                MessageComposable(
+                    message = message,
+                    isSent = message.source == currentUser,
+                    modifier = Modifier.align(Start)
+                )
                 Spacer(modifier = Modifier.height(padding_small))
             }
         }
@@ -93,7 +91,7 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel(), username: String) {
                     title = "",
                     value = state.value.clipBoard,
                     onValueChange = {
-                        viewModel.onTextChange(it)
+                        homeViewModel.onTextChange(it)
                     },
 //                leadingIcon = {
 //                    IconButton(onClick = { /*TODO*/ }) {
@@ -116,7 +114,7 @@ fun ChatScreen(viewModel: ChatViewModel = hiltViewModel(), username: String) {
 
             IconButton(
                 onClick = {
-                    if (state.value.clipBoard.isNotEmpty()) viewModel.onSend(username)
+                    if (state.value.clipBoard.isNotEmpty()) homeViewModel.onSend(username)
                 }, modifier = Modifier
                     .padding(horizontal = padding_small)
                     .size(size_48)

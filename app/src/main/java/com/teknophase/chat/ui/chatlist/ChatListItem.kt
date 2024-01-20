@@ -39,10 +39,11 @@ fun ChatListItem(
     time: String,
     profileUrl: String,
     unread: Int? = null,
-    pinned: Boolean = false
+    pinned: Boolean = false,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
             .padding(all = padding_small)

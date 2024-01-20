@@ -2,6 +2,7 @@ package com.teknophase.chat.ui.chat
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -40,7 +41,11 @@ import java.util.Date
 fun MessageComposable(message: Message, isSent: Boolean, modifier: Modifier = Modifier) {
     val backgroundColor =
         if (isSent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
-    Row(verticalAlignment = Alignment.Bottom, modifier = modifier) {
+    Row(
+        verticalAlignment = Alignment.Bottom,
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = if (isSent) Arrangement.End else Arrangement.Start
+    ) {
         Column(
             modifier = Modifier
                 .background(color = backgroundColor, shape = RoundedCornerShape(size_08))

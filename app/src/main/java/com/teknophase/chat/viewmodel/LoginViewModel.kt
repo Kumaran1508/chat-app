@@ -49,7 +49,9 @@ class LoginViewModel @Inject constructor(private val authRepository: AuthReposit
                 }
             } catch (e: Exception) {
                 Log.e("LoginError", e.message.toString())
-                Toast.makeText(context,e.message,Toast.LENGTH_LONG).show()
+                GlobalScope.launch(Dispatchers.Main) {
+                    Toast.makeText(context, e.message, Toast.LENGTH_LONG).show()
+                }
             } finally {
                 _isLoading.value = false
             }

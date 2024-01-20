@@ -18,8 +18,3 @@ enum class MessageType {
     SIGNED
 }
 
-enum class MessageDestinationType {
-    DM,
-    GROUP,
-    CHANNEL
-}

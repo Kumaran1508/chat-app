@@ -145,7 +145,8 @@ fun LoginScreen(
                 )
             },
             isError = isUsernameError,
-            errorText = stringResource(id = R.string.invalid_username)
+            errorText = stringResource(id = R.string.invalid_username),
+            modifier = Modifier.padding(bottom = padding_medium)
         )
 
         AppTextField(
@@ -155,8 +156,7 @@ fun LoginScreen(
                 loginViewModel.onPasswordChange(it)
                 isPasswordError = !passwordRegex.matches(it)
             },
-            modifier = Modifier
-                .padding(top = padding_large),
+            modifier = Modifier,
             placeholder = stringResource(id = R.string.type_something),
             maxLines = 1,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),

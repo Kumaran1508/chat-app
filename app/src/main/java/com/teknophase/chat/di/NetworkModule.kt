@@ -11,19 +11,24 @@ import javax.inject.Named
 const val API_BASE_DOMAIN_KEY = "ApiBaseDomain"
 const val WEBSOCKET_BASE_DOMAIN_KEY = "WebSocketBaseDomain"
 
+const val WEB_SOCKET_URL = "ws://192.168.29.84:3000/"
+const val WEB_API_URL = "http://192.168.29.84:3000/"
+const val WEB_SOCKET_URL_WORK = "ws://172.19.101.193:3000/"
+const val WEB_API_URL_WORK = "http://172.19.101.193:3000/"
+
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
     @Provides
     @Named(API_BASE_DOMAIN_KEY)
     fun providesBaseDomain(): String {
-        return ""
+        return WEB_API_URL
     }
 
     @Provides
     @Named(WEBSOCKET_BASE_DOMAIN_KEY)
     fun providesWebSocketBaseDomain(): String {
-        return ""
+        return WEB_SOCKET_URL
     }
 
     @Provides

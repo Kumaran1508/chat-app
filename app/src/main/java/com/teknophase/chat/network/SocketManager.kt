@@ -1,18 +1,18 @@
 package com.teknophase.chat.network
 
+import com.teknophase.chat.di.WEB_SOCKET_URL
 import com.teknophase.chat.providers.AuthState
 import io.socket.client.IO
-import io.socket.client.Manager
 import io.socket.client.Socket
-import io.socket.emitter.Emitter
-import okhttp3.Request
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.net.URISyntaxException
 
 object SocketManager {
 
-    private const val webSocketUrl: String = "ws://192.168.29.84:3000/"
-
     private var socket: Socket? = null
+    private var _isConnected: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isConnected: StateFlow<Boolean> = _isConnected
 
     fun getSocket(): Socket {
         val id = socket?.id()
@@ -29,8 +29,19 @@ object SocketManager {
                 options.extraHeaders = headers
 
                 // Connect to the Socket.IO server with custom options
-                socket = IO.socket(webSocketUrl, options)
-                socket?.connect()?.emit("user", AuthState.getUser()?.username)
+                socket = IO.socket(WEB_SOCKET_URL, options)
+                socket?.on(Socket.EVENT_CONNECT) {
+                    _isConnected.value = true
+                }
+                socket?.on(Socket.EVENT_CONNECT_ERROR) {
+                    _isConnected.value = false
+                }
+                socket?.on(Socket.EVENT_DISCONNECT) {
+                    _isConnected.value = false
+                }
+
+                socket?.connect()
+
             } catch (e: URISyntaxException) {
                 throw RuntimeException(e)
             }

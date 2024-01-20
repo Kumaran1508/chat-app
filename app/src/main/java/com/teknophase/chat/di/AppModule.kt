@@ -5,6 +5,7 @@ import com.teknophase.chat.network.repositories.AuthRepository
 import com.teknophase.chat.network.repositories.MessageRepository
 import com.teknophase.chat.network.repositories.SocketMessageRepository
 import com.teknophase.chat.network.services.AuthService
+import com.teknophase.chat.viewmodel.HomeViewModel
 import com.teknophase.chat.viewmodel.LoginViewModel
 import dagger.Module
 import dagger.Provides
@@ -32,6 +33,12 @@ object AppModule {
     @Singleton
     fun providesMessageRepository(): MessageRepository {
         return SocketMessageRepository()
+    }
+
+    @Provides
+    @Singleton
+    fun providesHomeViewModel(messageRepository: MessageRepository): HomeViewModel {
+        return HomeViewModel(messageRepository)
     }
 
 }

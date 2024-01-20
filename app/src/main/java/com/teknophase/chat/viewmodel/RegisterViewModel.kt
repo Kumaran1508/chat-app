@@ -218,7 +218,7 @@ class RegisterViewModel @Inject constructor(private val authRepository: AuthRepo
                 // TODO: Add profile url if image upload is implemented
                 val isUpdated = authRepository.updateUserProfile(
                     UpdateProfileRequest(
-                        displayName = _registerState.value.displayName
+                        displayName = _registerState.value.displayName.toString()
                     )
                 )
                 if (!isUpdated) GlobalScope.launch(Dispatchers.Main) {
