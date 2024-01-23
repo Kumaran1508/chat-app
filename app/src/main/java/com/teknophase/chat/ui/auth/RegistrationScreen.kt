@@ -49,6 +49,7 @@ import com.teknophase.chat.data.request.AuthRequest
 import com.teknophase.chat.data.request.RegisterRequest
 import com.teknophase.chat.data.request.UpdateProfileRequest
 import com.teknophase.chat.data.response.AuthResponse
+import com.teknophase.chat.data.response.UserResponse
 import com.teknophase.chat.navigation.BottomNavRoutes
 import com.teknophase.chat.network.repositories.AuthRepository
 import com.teknophase.chat.ui.common.PrimaryButton
@@ -237,6 +238,14 @@ fun RegistrationScreenPreview() {
                 }
 
                 override suspend fun updateUserProfile(profileRequest: UpdateProfileRequest): Boolean {
+                    TODO("Not yet implemented")
+                }
+
+                override suspend fun getUserProfile(username: String): UserResponse {
+                    TODO("Not yet implemented")
+                }
+
+                override suspend fun getUserProfileById(id: String): UserResponse {
                     TODO("Not yet implemented")
                 }
 

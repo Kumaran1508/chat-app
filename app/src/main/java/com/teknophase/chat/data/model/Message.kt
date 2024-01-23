@@ -1,5 +1,7 @@
 package com.teknophase.chat.data.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
@@ -8,8 +10,11 @@ import com.google.gson.annotations.SerializedName
 import java.lang.reflect.Type
 import java.util.Date
 
+@Entity
 data class Message(
-    @SerializedName("messageId", alternate = ["_id"]) val messageId: String,
+    @SerializedName("messageId", alternate = ["_id"])
+    @PrimaryKey
+    val messageId: String,
     @SerializedName("source") val source: String,
     @SerializedName("destination") val destination: String,
     @SerializedName("content") val content: String,

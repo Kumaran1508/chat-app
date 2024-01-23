@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -37,6 +38,10 @@ import com.teknophase.chat.viewmodel.HomeViewModel
 fun ChatListScreen(navController: NavController, homeViewModel: HomeViewModel = hiltViewModel()) {
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
+            val state = homeViewModel.chatState.collectAsState()
+            val isConnected = SocketManager.isConnected.collectAsState()
+            val usernameAvailable = state.value.usernameAvailable
+
             //Temporary
             var user by remember {
                 mutableStateOf("")
@@ -44,23 +49,30 @@ fun ChatListScreen(navController: NavController, homeViewModel: HomeViewModel = 
             AppTextField(
                 title = "",
                 value = user,
-                onValueChange = { user = it },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done)
-            )
-            Row {
-                PrimaryButton(text = "Go", modifier = Modifier.padding(padding_small)) {
-                    navController.navigate(
+                onValueChange = {
+                    user = it
+                    homeViewModel.onSearchChange(it)
+                },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = {
+                    if (usernameAvailable) navController.navigate(
                         route = AppNavRoutes.CHAT.route.replace("{username}", user),
                     )
-                }
-                PrimaryButton(text = "reconnect", modifier = Modifier.padding(padding_small)) {
-                    SocketManager.getSocket()
+                })
+            )
+            Row {
+                PrimaryButton(
+                    text = "Go",
+                    modifier = Modifier.padding(padding_small),
+                    enabled = usernameAvailable
+                ) {
+                    navController.navigate(
+                        route = AppNavRoutes.CHAT.route
+                    )
                 }
             }
             // Temporary Ends here
 
-            val state = homeViewModel.chatState.collectAsState()
-            val isConnected = SocketManager.isConnected.collectAsState()
             if (!isConnected.value) InfoBanner(info = stringResource(R.string.offline), errorRed)
 
             LazyColumn(
@@ -80,13 +92,14 @@ fun ChatListScreen(navController: NavController, homeViewModel: HomeViewModel = 
                                 tween(600)
                             )
                             .clickable {
+                                homeViewModel.setUser(chatListItem.username)
+                                homeViewModel.markRead(chatListItem.name)
                                 navController.navigate(
                                     route = AppNavRoutes.CHAT.route.replace(
                                         "{username}",
                                         chatListItem.name
                                     )
                                 )
-                                homeViewModel.markRead(chatListItem.name)
                             }
                     )
                 }

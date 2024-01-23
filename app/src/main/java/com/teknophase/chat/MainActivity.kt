@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import com.teknophase.chat.data.AppDatabase
 import com.teknophase.chat.navigation.AppNavHost
 import com.teknophase.chat.network.SocketManager
 import com.teknophase.chat.providers.AuthState
@@ -24,6 +25,7 @@ class ChatApplication : Application()
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppDatabase.init(this.applicationContext)
         initAuth(this.baseContext)
         setContent {
             ChatTheme {

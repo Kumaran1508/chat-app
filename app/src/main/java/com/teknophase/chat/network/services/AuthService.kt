@@ -4,10 +4,12 @@ import com.teknophase.chat.data.request.AuthRequest
 import com.teknophase.chat.data.request.RegisterRequest
 import com.teknophase.chat.data.request.UpdateProfileRequest
 import com.teknophase.chat.data.response.AuthResponse
+import com.teknophase.chat.data.response.UserResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface AuthService {
@@ -22,5 +24,11 @@ interface AuthService {
 
     @POST("user/update-profile")
     suspend fun updateProfile(@Body profile: UpdateProfileRequest): Response<Boolean>
+
+    @GET("user")
+    suspend fun getUserProfile(@Query("username") username: String): Response<UserResponse>
+
+    @GET("user")
+    suspend fun getUserProfileById(@Query("id") id: String): Response<UserResponse>
 
 }

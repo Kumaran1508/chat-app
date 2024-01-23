@@ -16,7 +16,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Start
@@ -26,7 +25,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.teknophase.chat.R
-import com.teknophase.chat.data.state.ChatHeaderState
 import com.teknophase.chat.network.SocketManager
 import com.teknophase.chat.providers.AuthState
 import com.teknophase.chat.ui.chat.ChatHeader
@@ -51,13 +49,16 @@ fun ChatScreen(
     val headerState = viewModel.chatHeaderState.collectAsState()
     val currentUser = AuthState.getUser()?.username.toString()
     val isConnected = SocketManager.isConnected.collectAsState()
+    val user = state.value.fetchedUser
 
-    LaunchedEffect(key1 = null) {
-        viewModel.setHeader(ChatHeaderState(receiverUsername = username))
-    }
+
 
     Column(modifier = Modifier.fillMaxSize()) {
-        ChatHeader(chatHeaderState = headerState.value)
+        ChatHeader(
+            displayName = if (user?.displayName != null) user.displayName else username,
+            profileUrl = user?.profileUrl,
+            about = user?.about
+        )
 
         if (!isConnected.value) InfoBanner(info = stringResource(R.string.offline), errorRed)
 
@@ -91,7 +92,7 @@ fun ChatScreen(
                     title = "",
                     value = state.value.clipBoard,
                     onValueChange = {
-                        homeViewModel.onTextChange(it)
+                        homeViewModel.onMessageChange(it)
                     },
 //                leadingIcon = {
 //                    IconButton(onClick = { /*TODO*/ }) {

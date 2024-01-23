@@ -3,6 +3,7 @@ package com.teknophase.chat.ui.chat
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,11 +17,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import coil.compose.AsyncImage
 import com.teknophase.chat.R
-import com.teknophase.chat.data.state.ChatHeaderState
 import com.teknophase.chat.ui.constants.padding_extra_small
 import com.teknophase.chat.ui.constants.padding_small
 import com.teknophase.chat.ui.constants.size_48
@@ -30,7 +31,7 @@ import com.teknophase.chat.ui.constants.text_small
 import com.teknophase.chat.ui.theme.ChatTheme
 
 @Composable
-fun ChatHeader(chatHeaderState: ChatHeaderState) {
+fun ChatHeader(displayName: String, profileUrl: String? = "", about: String?) {
     Row(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.surface)
@@ -39,9 +40,9 @@ fun ChatHeader(chatHeaderState: ChatHeaderState) {
             .padding(horizontal = padding_small),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (chatHeaderState.profileUrl.isNotEmpty()) {
+        if (profileUrl!=null) {
             AsyncImage(
-                model = chatHeaderState.profileUrl,
+                model = profileUrl,
                 contentDescription = null,
                 modifier = Modifier
                     .size(size_48)
@@ -55,21 +56,23 @@ fun ChatHeader(chatHeaderState: ChatHeaderState) {
                 modifier = Modifier
                     .size(size_48)
                     .clip(RoundedCornerShape(size_48))
-                    .background(MaterialTheme.colorScheme.onSurfaceVariant)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentScale = ContentScale.Inside
             )
         }
 
         Column(
-            modifier = Modifier.padding(horizontal = padding_small)
+            modifier = Modifier.padding(horizontal = padding_small),
+            verticalArrangement = Arrangement.SpaceAround
         ) {
             Text(
-                text = chatHeaderState.receiverUsername,
+                text = displayName,
                 fontSize = text_normal,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            Text(
-                text = chatHeaderState.about,
+            if (about != null) Text(
+                text = about,
                 fontSize = text_small,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = padding_extra_small)
@@ -83,12 +86,18 @@ fun ChatHeader(chatHeaderState: ChatHeaderState) {
 @Composable
 fun ChatHeaderPreview() {
     ChatTheme {
-        ChatHeader(
-            chatHeaderState = ChatHeaderState(
-                receiverUsername = "John Doe",
-                about = "developer",
-                profileUrl = ""
+        Column {
+            ChatHeader(
+                displayName = "Zachari",
+                profileUrl = null,
+                about = "developer"
             )
-        )
+
+            ChatHeader(
+                displayName = "Zachari",
+                profileUrl = "",
+                about = "developer"
+            )
+        }
     }
 }
