@@ -1,12 +1,12 @@
 package com.teknophase.chat.network
 
+import android.util.Log
 import com.teknophase.chat.di.WEB_SOCKET_URL
 import com.teknophase.chat.providers.AuthState
 import io.socket.client.IO
 import io.socket.client.Socket
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import java.net.URISyntaxException
 
 object SocketManager {
 
@@ -42,8 +42,12 @@ object SocketManager {
 
                 socket?.connect()
 
-            } catch (e: URISyntaxException) {
-                throw RuntimeException(e)
+            } catch (e: Exception) {
+                Log.e(
+                    "SocketManagerError",
+                    "Unable to establish connection ${e.message.toString()}"
+                )
+                e.printStackTrace()
             }
         }
         return socket!!

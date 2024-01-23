@@ -4,7 +4,6 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.navigation.NavController
 import com.google.gson.Gson
 import com.teknophase.chat.data.AppDatabase
 import com.teknophase.chat.data.model.ChatListModel
@@ -18,7 +17,6 @@ import com.teknophase.chat.data.request.MessageRequest
 import com.teknophase.chat.data.response.MessageAcknowledgeResponse
 import com.teknophase.chat.data.response.UserResponse
 import com.teknophase.chat.data.state.ChatState
-import com.teknophase.chat.navigation.AppNavRoutes
 import com.teknophase.chat.network.SocketManager
 import com.teknophase.chat.network.repositories.AuthRepository
 import com.teknophase.chat.network.repositories.MessageRepository
@@ -29,6 +27,7 @@ import com.teknophase.chat.network.repositories.SOCKET_CHAT_READ
 import com.teknophase.chat.providers.AuthState
 import com.teknophase.chat.util.getFormattedTimeForMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.socket.client.Socket
 import io.socket.emitter.Emitter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -47,7 +46,8 @@ class HomeViewModel @Inject constructor(
     ViewModel() {
     private var _chatState: MutableStateFlow<ChatState> = MutableStateFlow(ChatState())
     val chatState: StateFlow<ChatState> = _chatState
-    private val apiCooldownMillis = 1000L  // Set your cooldown time in milliseconds
+    private val apiCooldownMillis = 1000L  // Cooldown time in milliseconds
+    private val messageTimeoutMillis = 15000L  // Message Timeout in milliseconds
     private val handler = Looper.myLooper()?.let { Handler(it) }
     private var runnable: Runnable? = null
 
@@ -66,6 +66,28 @@ class HomeViewModel @Inject constructor(
             messageRepository.addOnAcknowledgeListener(acknowledgeListener)
             messageRepository.addOnDeliveredListener(deliveredListener)
             messageRepository.addOnReadListener(readListener)
+
+            try {
+                val socket = SocketManager.getSocket()
+                socket.on(Socket.EVENT_CONNECT) {
+                    messages?.filter {
+                        it.messageStatus == MessageStatus.QUEUED
+                    }?.forEach {
+                        GlobalScope.launch(Dispatchers.IO) {
+                            val messageRequest = MessageRequest(
+                                requestId = it.messageId,
+                                sender = it.source,
+                                receiver = it.destination,
+                                content = it.content,
+                                sentAt = it.sentAt
+                            )
+                            messageRepository.sendMessage(messageRequest)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("SocketError", "Error initialising onConnect event")
+            }
         }
     }
 
@@ -79,7 +101,7 @@ class HomeViewModel @Inject constructor(
                 val userList = _chatState.value.userList.toMutableMap()
 
                 if (!userList.containsKey(message.source)) {
-                    val user = authRepository.getUserProfile(message.source)
+                    val user = authRepository.getUserProfile(message.source) // Todo: Update chatListModel
                     val chatListModel = createChatListModel(message)
                     userList[message.source] = chatListModel
                     AppDatabase.db?.chatListRepository()?.save(chatListModel)
@@ -133,10 +155,13 @@ class HomeViewModel @Inject constructor(
                         messageId = acknowledgeResponse.messageId,
                         messageStatus = MessageStatus.SENT
                     )
-                    // Todo: Update local db
                     GlobalScope.launch(Dispatchers.IO) {
-                        AppDatabase.db?.messageRepository()?.delete(it)
-                        AppDatabase.db?.messageRepository()?.save(updatedMessage)
+                        try {
+                            AppDatabase.db?.messageRepository()?.delete(it)
+                            AppDatabase.db?.messageRepository()?.save(updatedMessage)
+                        } catch (e: Exception) {
+                            Log.e("RoomError", e.message.toString())
+                        }
                     }
                     updatedMessage
                 } else it
@@ -165,9 +190,12 @@ class HomeViewModel @Inject constructor(
                         delivered = true,
                         receivedAt = deliveredModel.deliveredAt
                     )
-                    // Todo: Update local db
                     GlobalScope.launch(Dispatchers.IO) {
-                        AppDatabase.db?.messageRepository()?.update(updatedMessage)
+                        try {
+                            AppDatabase.db?.messageRepository()?.update(updatedMessage)
+                        } catch (e: Exception) {
+                            Log.e("RoomError", e.message.toString())
+                        }
                     }
                     updatedMessage
                 } else it
@@ -196,9 +224,12 @@ class HomeViewModel @Inject constructor(
                         read = true,
                         readAt = readModel.readAt
                     )
-                    // Todo: Update local db
                     GlobalScope.launch(Dispatchers.IO) {
-                        AppDatabase.db?.messageRepository()?.update(updatedMessage)
+                        try {
+                            AppDatabase.db?.messageRepository()?.update(updatedMessage)
+                        } catch (e: Exception) {
+                            Log.e("RoomError", e.message.toString())
+                        }
                     }
                     updatedMessage
                 } else it
@@ -224,14 +255,6 @@ class HomeViewModel @Inject constructor(
             receiver = username,
             content = chatState.value.clipBoard
         )
-
-        GlobalScope.launch(Dispatchers.IO) {
-            if (SocketManager.isConnected.value) {
-                messageRepository.sendMessage(messageRequest)
-                Log.d("Sent", messageRequest.toString())
-            } else Log.e("Socket", "Socket not connected")
-        }
-
         val message = Message(
             messageId = messageRequest.requestId,
             source = messageRequest.sender,
@@ -242,22 +265,62 @@ class HomeViewModel @Inject constructor(
             messageType = MessageType.values()[messageRequest.messageType],
             hasAttachment = messageRequest.hasAttachment
         )
-        _chatState.value = _chatState.value.copy(
-            messages = _chatState.value.messages.plusElement(
-                message
-            ),
-            clipBoard = ""
-        )
+
         GlobalScope.launch(Dispatchers.IO) {
+            if (SocketManager.isConnected.value) {
+                messageRepository.sendMessage(messageRequest)
+                Log.d("Sent", messageRequest.toString())
+            } else Log.e("Socket", "Socket not connected")
+
+
+            _chatState.value = _chatState.value.copy(
+                messages = _chatState.value.messages.plusElement(
+                    message
+                ),
+                clipBoard = ""
+            )
+
             val userList = _chatState.value.userList.toMutableMap()
             if (!userList.containsKey(message.source)) {
                 val chatListModel = createChatListModel(message)
                 userList[message.source] = chatListModel
                 GlobalScope.launch(Dispatchers.IO) {
-                    AppDatabase.db?.chatListRepository()?.save(chatListModel)
+                    try {
+                        AppDatabase.db?.chatListRepository()?.save(chatListModel)
+                    } catch (e: Exception) {
+                        Log.e("RoomError", e.message.toString())
+                    }
                 }
             }
-            AppDatabase.db?.messageRepository()?.save(message)
+
+            try {
+                AppDatabase.db?.messageRepository()?.save(message)
+            } catch (e: Exception) {
+                Log.e("RoomError", e.message.toString())
+            }
+
+            handler?.postDelayed({
+                GlobalScope.launch(Dispatchers.IO) {
+                    if (!chatState.value.messages.filter { it.messageId == messageRequest.requestId }
+                            .isEmpty()) {
+                        val updatedMessage = message.copy(messageStatus = MessageStatus.FAILED)
+                        val messages = chatState.value.messages.map {
+                            if (it.messageId == messageRequest.requestId) updatedMessage
+                            else it
+                        }
+                        _chatState.value = _chatState.value.copy(messages = messages)
+                        AppDatabase.db?.messageRepository()?.update(updatedMessage)
+                        Log.d("MessageFail Updated", messageRequest.requestId)
+                    }
+                }
+
+            }, messageTimeoutMillis)
+        }
+
+
+
+        GlobalScope.launch(Dispatchers.IO) {
+
         }
     }
 
@@ -275,13 +338,17 @@ class HomeViewModel @Inject constructor(
             }
             Log.d("unreadMessagesCount", userMessages.count().toString())
             for (message in userMessages) {
-                messageRepository.onRead(
-                    MessageReadModel(
-                        messageId = message.messageId,
-                        source = message.source,
-                        acknowledgedBy = AuthState.getUser()!!.username
+                try {
+                    messageRepository.onRead(
+                        MessageReadModel(
+                            messageId = message.messageId,
+                            source = message.source,
+                            acknowledgedBy = AuthState.getUser()!!.username
+                        )
                     )
-                )
+                } catch (e: Exception) {
+                    Log.e("SocketError", e.message.toString())
+                }
             }
 
         }
@@ -323,13 +390,13 @@ class HomeViewModel @Inject constructor(
 
     fun setUser(username: String) {
         GlobalScope.launch(Dispatchers.IO) {
-            val user = authRepository.getUserProfile(username)
-            _chatState.value = _chatState.value.copy(fetchedUser = user)
+            try {
+                val user = authRepository.getUserProfile(username)
+                _chatState.value = _chatState.value.copy(fetchedUser = user)
+            } catch (e: Exception) {
+                Log.e("RetrofitError", "Unable to fetch user. ${e.message.toString()}")
+            }
         }
-    }
-
-    fun onNavigateChatScreen(navController: NavController) {
-
     }
 
     fun onSearchChange(username: String) {

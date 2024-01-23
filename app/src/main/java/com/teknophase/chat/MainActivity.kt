@@ -3,6 +3,7 @@ package com.teknophase.chat
 import android.app.Application
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,13 +52,21 @@ class MainActivity : ComponentActivity() {
                 authToken,
                 UserMetaData(username = username.toString(), userId = userId.toString())
             )
-            SocketManager.getSocket()
+            try {
+                SocketManager.getSocket()
+            } catch (e: Exception) {
+                Log.e("SocketError", e.message.toString())
+            }
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        SocketManager.getSocket().disconnect()
+        try {
+            SocketManager.getSocket().disconnect()
+        } catch (e: Exception) {
+            Log.e("SocketError", e.message.toString())
+        }
     }
 }
 

@@ -36,17 +36,14 @@ import com.teknophase.chat.ui.constants.size_48
 import com.teknophase.chat.ui.constants.size_64
 import com.teknophase.chat.ui.theme.PrimaryBlueVariant
 import com.teknophase.chat.ui.theme.errorRed
-import com.teknophase.chat.viewmodel.ChatViewModel
 import com.teknophase.chat.viewmodel.HomeViewModel
 
 @Composable
 fun ChatScreen(
     homeViewModel: HomeViewModel = hiltViewModel(),
-    viewModel: ChatViewModel = hiltViewModel(),
     username: String
 ) {
     val state = homeViewModel.chatState.collectAsState()
-    val headerState = viewModel.chatHeaderState.collectAsState()
     val currentUser = AuthState.getUser()?.username.toString()
     val isConnected = SocketManager.isConnected.collectAsState()
     val user = state.value.fetchedUser

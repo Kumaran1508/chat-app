@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.teknophase.chat.R
 import com.teknophase.chat.data.model.Message
 import com.teknophase.chat.data.model.MessageDestinationType
+import com.teknophase.chat.data.model.MessageStatus
 import com.teknophase.chat.ui.constants.padding_small
 import com.teknophase.chat.ui.constants.size_08
 import com.teknophase.chat.ui.constants.size_100
@@ -34,6 +35,7 @@ import com.teknophase.chat.ui.constants.size_16
 import com.teknophase.chat.ui.constants.size_300
 import com.teknophase.chat.ui.constants.text_small
 import com.teknophase.chat.ui.theme.ChatTheme
+import com.teknophase.chat.ui.theme.errorRed
 import com.teknophase.chat.util.getFormattedTimeForMessage
 import java.util.Date
 
@@ -69,10 +71,22 @@ fun MessageComposable(message: Message, isSent: Boolean, modifier: Modifier = Mo
         }
 
         if (isSent) {
-            val icon =
-                if (message.read == true) R.drawable.icon_visible else R.drawable.icon_success
-            val color =
-                if (message.delivered == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
+            val icon = when (message.messageStatus) {
+                MessageStatus.QUEUED -> R.drawable.icon_sand_clock
+                MessageStatus.FAILED -> R.drawable.icon_caution
+                MessageStatus.SENT -> R.drawable.icon_success
+                MessageStatus.DELIVERED -> R.drawable.icon_success
+                MessageStatus.READ -> R.drawable.icon_visible
+                null -> R.drawable.icon_sand_clock
+            }
+            val color = when (message.messageStatus) {
+                MessageStatus.QUEUED -> MaterialTheme.colorScheme.onBackground
+                MessageStatus.FAILED -> errorRed
+                MessageStatus.SENT -> MaterialTheme.colorScheme.onBackground
+                MessageStatus.DELIVERED -> MaterialTheme.colorScheme.primary
+                MessageStatus.READ -> MaterialTheme.colorScheme.primary
+                null -> MaterialTheme.colorScheme.onBackground
+            }
             Icon(
                 painter = painterResource(id = icon),
                 contentDescription = null,

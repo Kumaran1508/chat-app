@@ -2,6 +2,7 @@ package com.teknophase.chat.ui.auth
 
 import android.app.Activity
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.util.Log
 import android.widget.Toast
 import android.widget.Toast.LENGTH_SHORT
 import androidx.activity.compose.BackHandler
@@ -232,7 +233,12 @@ fun LoginScreen(
             enabled = !isUsernameError && !isPasswordError
         ) {
             loginViewModel.onLoginClicked(context) {
-                SocketManager.getSocket()
+                try {
+                    SocketManager.getSocket()
+                } catch (e: Exception) {
+                    Log.e("SocketError", e.message.toString())
+                    e.printStackTrace()
+                }
                 onNavigate(BottomNavRoutes.CHAT.route)
             }
         }
