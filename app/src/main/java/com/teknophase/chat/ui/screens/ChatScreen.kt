@@ -1,5 +1,6 @@
 package com.teknophase.chat.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +17,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Start
 import androidx.compose.ui.Modifier
@@ -41,20 +47,38 @@ import com.teknophase.chat.viewmodel.HomeViewModel
 @Composable
 fun ChatScreen(
     homeViewModel: HomeViewModel = hiltViewModel(),
-    username: String
+    username: String,
+    onBack: () -> Unit
 ) {
     val state = homeViewModel.chatState.collectAsState()
     val currentUser = AuthState.getUser()?.username.toString()
     val isConnected = SocketManager.isConnected.collectAsState()
     val user = state.value.fetchedUser
+    val messages = state.value.messages
+    var chat by remember {
+        mutableStateOf(messages.filter {
+            it.source == username || it.destination == username
+        })
+    }
 
+    SideEffect {
+        chat = messages.filter {
+            it.source == username || it.destination == username
+        }
+    }
 
+    BackHandler {
+        homeViewModel.clearFetchedUser()
+        homeViewModel.markRead(username)
+        onBack()
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         ChatHeader(
             displayName = if (user?.displayName != null) user.displayName else username,
             profileUrl = user?.profileUrl,
-            about = user?.about
+            about = user?.about,
+            username = username
         )
 
         if (!isConnected.value) InfoBanner(info = stringResource(R.string.offline), errorRed)
@@ -65,7 +89,7 @@ fun ChatScreen(
                 .weight(1f)
                 .padding(padding_small)
         ) {
-            items(state.value.messages.size) { index ->
+            items(chat.size) { index ->
                 val message = state.value.messages[index]
                 MessageComposable(
                     message = message,

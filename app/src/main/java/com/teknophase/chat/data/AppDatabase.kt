@@ -13,7 +13,7 @@ import com.teknophase.chat.util.RoomTypeConvertors
 
 @Database(
     version = 1,
-    entities = [Message::class,ChatListModel::class]
+    entities = [Message::class, ChatListModel::class]
 )
 @TypeConverters(RoomTypeConvertors::class)
 abstract class LocalDatabase : RoomDatabase() {
@@ -23,12 +23,12 @@ abstract class LocalDatabase : RoomDatabase() {
 }
 
 object AppDatabase {
-    var db : LocalDatabase? = null
+    var db: LocalDatabase? = null
 
     fun init(applicationContext: Context) {
         db = Room.databaseBuilder(
             applicationContext,
-            LocalDatabase::class.java, "database-name"
+            LocalDatabase::class.java, "pyng"
         ).build()
     }
 }

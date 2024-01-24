@@ -67,7 +67,10 @@ fun ChatListScreen(navController: NavController, homeViewModel: HomeViewModel = 
                     enabled = usernameAvailable
                 ) {
                     navController.navigate(
-                        route = AppNavRoutes.CHAT.route
+                        route = AppNavRoutes.CHAT.route.replace(
+                            "{username}",
+                            user
+                        )
                     )
                 }
             }
@@ -93,11 +96,11 @@ fun ChatListScreen(navController: NavController, homeViewModel: HomeViewModel = 
                             )
                             .clickable {
                                 homeViewModel.setUser(chatListItem.username)
-                                homeViewModel.markRead(chatListItem.name)
+                                homeViewModel.markRead(chatListItem.username)
                                 navController.navigate(
                                     route = AppNavRoutes.CHAT.route.replace(
                                         "{username}",
-                                        chatListItem.name
+                                        chatListItem.username
                                     )
                                 )
                             }

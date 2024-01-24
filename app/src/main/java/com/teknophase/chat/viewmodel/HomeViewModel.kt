@@ -94,21 +94,38 @@ class HomeViewModel @Inject constructor(
 
     private val chatListener = Emitter.Listener { _message ->
         Log.d(SOCKET_CHAT_MESSAGE, _message[0].toString())
-        try {
-            GlobalScope.launch(Dispatchers.IO) {
+
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
                 val message: Message = gson
                     .fromJson(_message[0].toString(), Message::class.java)
                 val userList = _chatState.value.userList.toMutableMap()
 
                 if (!userList.containsKey(message.source)) {
-                    val user = authRepository.getUserProfile(message.source) // Todo: Update chatListModel
-                    val chatListModel = createChatListModel(message)
-                    userList[message.source] = chatListModel
-                    AppDatabase.db?.chatListRepository()?.save(chatListModel)
+                    var chatListModel = createChatListModel(message)
+                    try {
+                        val user = authRepository.getUserProfile(message.source)
+                        chatListModel = createChatListModel(message, user)
+                    } catch (e: Exception) {
+                        Log.e(
+                            "RetrofitError",
+                            "Unable to fetch user profile. " + e.message.toString()
+                        )
+                    }
+                    try {
+                        userList[message.source] = chatListModel
+                        AppDatabase.db?.chatListRepository()?.save(chatListModel)
+                    } catch (e: Exception) {
+                        Log.e("RoomError", "Unable to store user profile. " + e.message.toString())
+                    }
+
                 } else {
-                    val count = userList[message.source]!!.unread
+                    var count = userList[message.source]!!.unread
+                    val isSent = message.source == AuthState.getUser()?.username
+                    if (!isSent && count != null) count += 1
+                    if (!isSent && count == null) count = 1
                     val chatListModel = userList[message.source]!!.copy(
-                        unread = if (count != null) count + 1 else 1,
+                        unread = count,
                         message = message.content,
                         time = getFormattedTimeForMessage(message.sentAt)
                     )
@@ -116,8 +133,9 @@ class HomeViewModel @Inject constructor(
                     AppDatabase.db?.chatListRepository()?.update(chatListModel)
                 }
 
+                val updatedMessages = _chatState.value.messages.plusElement(message)
                 _chatState.value = _chatState.value.copy(
-                    messages = _chatState.value.messages.plus(message),
+                    messages = updatedMessages,
                     userList = userList
                 )
 
@@ -134,11 +152,21 @@ class HomeViewModel @Inject constructor(
                         )
                     )
                 messageRepository.onDelivered(deliveredModel)
+                if (chatState.value.fetchedUser != null
+                    && chatState.value.fetchedUser?.username == message.source
+                ) {
+                    val readModel = MessageReadModel(
+                        messageId = message.messageId,
+                        source = message.source,
+                        acknowledgedBy = AuthState.getUser()!!.username
+                    )
+                    messageRepository.onRead(readModel)
+                }
 
+            } catch (e: Exception) {
+                Log.e("MessageParseError", "Unable to parse received message" + e.message)
+                e.printStackTrace()
             }
-        } catch (e: Exception) {
-            Log.e("MessageParseError", "Unable to parse received message" + e.message)
-            e.printStackTrace()
         }
     }
 
@@ -273,25 +301,34 @@ class HomeViewModel @Inject constructor(
             } else Log.e("Socket", "Socket not connected")
 
 
-            _chatState.value = _chatState.value.copy(
-                messages = _chatState.value.messages.plusElement(
-                    message
-                ),
-                clipBoard = ""
-            )
-
             val userList = _chatState.value.userList.toMutableMap()
-            if (!userList.containsKey(message.source)) {
-                val chatListModel = createChatListModel(message)
-                userList[message.source] = chatListModel
-                GlobalScope.launch(Dispatchers.IO) {
-                    try {
-                        AppDatabase.db?.chatListRepository()?.save(chatListModel)
-                    } catch (e: Exception) {
-                        Log.e("RoomError", e.message.toString())
-                    }
+            if (!userList.containsKey(message.destination)) {
+                var chatListModel = createChatListModel(message, chatState.value.fetchedUser)
+                try {
+                    userList[message.destination] = chatListModel
+                    AppDatabase.db?.chatListRepository()?.save(chatListModel)
+                } catch (e: Exception) {
+                    Log.e("RoomError", "Unable to store user profile. " + e.message.toString())
+                }
+            } else {
+                userList[message.destination] = userList[message.destination]!!.copy(
+                    message = message.content,
+                    time = getFormattedTimeForMessage(message.sentAt)
+                )
+                try {
+                    AppDatabase.db?.chatListRepository()?.update(userList[message.destination]!!)
+                } catch (e: Exception) {
+                    Log.e("RoomError", "Unable to store user profile. " + e.message.toString())
                 }
             }
+            val updatedMessages = chatState.value.messages.plusElement(
+                message
+            )
+            _chatState.value = _chatState.value.copy(
+                messages = updatedMessages,
+                clipBoard = ""
+            )
+            _chatState.value = _chatState.value.copy(userList = userList)
 
             try {
                 AppDatabase.db?.messageRepository()?.save(message)
@@ -315,12 +352,6 @@ class HomeViewModel @Inject constructor(
                 }
 
             }, messageTimeoutMillis)
-        }
-
-
-
-        GlobalScope.launch(Dispatchers.IO) {
-
         }
     }
 
@@ -354,16 +385,17 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun createChatListModel(message: Message): ChatListModel {
+    private fun createChatListModel(message: Message, user: UserResponse? = null): ChatListModel {
+        val isSent = message.source == AuthState.getUser()!!.username
         val username =
-            if (message.source == AuthState.getUser()!!.username) message.destination else message.source
+            if (isSent) message.destination else message.source
         return ChatListModel(
             username = username,
-            name = username,
+            name = if (user?.displayName != null) user.displayName else username,
             message = message.content,
             time = getFormattedTimeForMessage(message.sentAt),
-            profileUrl = "",
-            unread = 1,
+            profileUrl = if (user?.profileUrl != null) user.profileUrl else "",
+            unread = if (isSent) null else 1,
             userId = UUID.randomUUID().toString()
         )
     }
@@ -374,12 +406,12 @@ class HomeViewModel @Inject constructor(
             if (username.isNotEmpty()) {
                 try {
                     val available = authRepository.checkUsernameAvailability(username)
-                    if (available) {
+                    if (!available) {
                         val user = authRepository.getUserProfile(username)
                         _chatState.value = _chatState.value.copy(fetchedUser = user)
                     }
                     _chatState.value =
-                        _chatState.value.copy(usernameAvailable = available)
+                        _chatState.value.copy(usernameAvailable = !available)
                 } catch (e: Exception) {
                     _chatState.value = _chatState.value.copy(usernameAvailable = false)
                 }
@@ -411,5 +443,9 @@ class HomeViewModel @Inject constructor(
         }
 
         handler?.postDelayed(runnable!!, apiCooldownMillis)
+    }
+
+    fun clearFetchedUser() {
+        _chatState.value = _chatState.value.copy(fetchedUser = null)
     }
 }

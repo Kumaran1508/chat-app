@@ -53,7 +53,7 @@ fun AppTopBar(
                 DropdownMenuItem(
                     text = { Text(text = "Reconnect", fontSize = text_normal) },
                     onClick = {
-                        SocketManager.getSocket()
+                        SocketManager.getSocket().connect()
                     })
 
                 DropdownMenuItem(text = { Text("Logout", fontSize = text_normal) }, onClick = {

@@ -31,7 +31,7 @@ import com.teknophase.chat.ui.constants.text_small
 import com.teknophase.chat.ui.theme.ChatTheme
 
 @Composable
-fun ChatHeader(displayName: String, profileUrl: String? = "", about: String?) {
+fun ChatHeader(username: String, displayName: String, profileUrl: String? = "", about: String?) {
     Row(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.surface)
@@ -40,7 +40,7 @@ fun ChatHeader(displayName: String, profileUrl: String? = "", about: String?) {
             .padding(horizontal = padding_small),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (profileUrl!=null) {
+        if (profileUrl != null) {
             AsyncImage(
                 model = profileUrl,
                 contentDescription = null,
@@ -71,8 +71,8 @@ fun ChatHeader(displayName: String, profileUrl: String? = "", about: String?) {
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            if (about != null) Text(
-                text = about,
+            Text(
+                text = username,
                 fontSize = text_small,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = padding_extra_small)
@@ -90,13 +90,15 @@ fun ChatHeaderPreview() {
             ChatHeader(
                 displayName = "Zachari",
                 profileUrl = null,
-                about = "developer"
+                about = "developer",
+                username = "Heber"
             )
 
             ChatHeader(
                 displayName = "Zachari",
                 profileUrl = "",
-                about = "developer"
+                about = "developer",
+                username = "Teah"
             )
         }
     }
