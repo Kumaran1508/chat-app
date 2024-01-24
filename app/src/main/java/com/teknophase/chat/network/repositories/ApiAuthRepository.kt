@@ -4,6 +4,7 @@ import com.teknophase.chat.data.request.AuthRequest
 import com.teknophase.chat.data.request.RegisterRequest
 import com.teknophase.chat.data.request.UpdateProfileRequest
 import com.teknophase.chat.data.response.AuthResponse
+import com.teknophase.chat.data.response.UserResponse
 import com.teknophase.chat.network.services.AuthService
 import javax.inject.Inject
 
@@ -28,6 +29,18 @@ class ApiAuthRepository @Inject constructor(private val authService: AuthService
 
     override suspend fun updateUserProfile(profileRequest: UpdateProfileRequest): Boolean {
         val response = authService.updateProfile(profileRequest)
+        if (response.isSuccessful && response.body() != null) return response.body()!!
+        else throw Exception(response.message())
+    }
+
+    override suspend fun getUserProfile(username: String): UserResponse {
+        val response = authService.getUserProfile(username)
+        if (response.isSuccessful && response.body() != null) return response.body()!!
+        else throw Exception(response.message())
+    }
+
+    override suspend fun getUserProfileById(id: String): UserResponse {
+        val response = authService.getUserProfileById(id)
         if (response.isSuccessful && response.body() != null) return response.body()!!
         else throw Exception(response.message())
     }

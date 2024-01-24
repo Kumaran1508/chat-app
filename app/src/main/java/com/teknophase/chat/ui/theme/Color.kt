@@ -3,6 +3,7 @@ package com.teknophase.chat.ui.theme
 import androidx.compose.ui.graphics.Color
 
 val PrimaryBlue = Color(0xFF3578EA)
+val PrimaryBlueVariant = Color(0xFF165FCD)
 
 val backgroundDark = Color(0xFF1A1E2D)
 val surfaceDark = Color(0xFF242B3D)

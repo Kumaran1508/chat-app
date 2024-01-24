@@ -35,14 +35,15 @@ import com.teknophase.chat.ui.theme.ChatTheme
 @Composable
 fun ChatListItem(
     name: String,
-    message: String,
+    message: String?,
     time: String,
     profileUrl: String,
     unread: Int? = null,
-    pinned: Boolean = false
+    pinned: Boolean = false,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
             .padding(all = padding_small)
@@ -118,18 +119,21 @@ fun ChatListItem(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = message,
-                    fontSize = text_small,
-                    maxLines = 1,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = time,
-                    fontSize = text_small,
-                    maxLines = 1,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if(message != null){
+                    Text(
+                        text = message,
+                        fontSize = text_small,
+                        maxLines = 1,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = time,
+                        fontSize = text_small,
+                        maxLines = 1,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
             }
         }
     }

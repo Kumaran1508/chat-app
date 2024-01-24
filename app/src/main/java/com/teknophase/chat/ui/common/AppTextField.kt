@@ -26,6 +26,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.teknophase.chat.ui.constants.size_56
 import com.teknophase.chat.ui.theme.ChatTheme
 import com.teknophase.chat.ui.theme.PrimaryBlue
 import com.teknophase.chat.ui.theme.errorRed
@@ -33,7 +34,7 @@ import com.teknophase.chat.ui.theme.onBackground
 
 @Composable
 fun AppTextField(
-    title: String,
+    title: String?,
     value: String,
     modifier: Modifier = Modifier,
     placeholder: String? = null,
@@ -56,14 +57,16 @@ fun AppTextField(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
     Column(modifier = modifier) {
-        Text(
-            text = title,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 24.dp, bottom = 4.dp),
-            style = TextStyle(
-                fontSize = 16.sp, fontWeight = FontWeight.Bold
+        if (title.toString().isNotEmpty()) {
+            Text(
+                text = title.toString(),
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 24.dp, bottom = 4.dp),
+                style = TextStyle(
+                    fontSize = 16.sp, fontWeight = FontWeight.Bold
+                )
             )
-        )
+        }
         TextField(
             value = value,
             placeholder = {
@@ -85,7 +88,7 @@ fun AppTextField(
                 disabledContainerColor = MaterialTheme.colorScheme.surface,
                 errorIndicatorColor = Color.Transparent
             ),
-            shape = RoundedCornerShape(56.dp),
+            shape = RoundedCornerShape(size_56),
             isError = isError,
             leadingIcon = leadingIcon,
             trailingIcon = trailingIcon,
@@ -100,7 +103,8 @@ fun AppTextField(
             singleLine = singleLine,
             maxLines = maxLines,
             minLines = minLines,
-            interactionSource = interactionSource
+            interactionSource = interactionSource,
+            modifier = modifier
         )
         if (errorText != null && isError) {
             Text(

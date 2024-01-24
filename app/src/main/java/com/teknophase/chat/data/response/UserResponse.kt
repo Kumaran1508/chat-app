@@ -1,9 +1,12 @@
 package com.teknophase.chat.data.response
 
+import com.google.gson.annotations.SerializedName
+
 data class UserResponse(
-    val mobile_number: String,
+    val id: String,
+    @SerializedName("mobile_number") val mobileNumber: String,
     val username: String,
-    val display_name: String?,
-    val profile_url: String?,
+    @SerializedName("display_name") val displayName: String?,
+    @SerializedName("profile_url") val profileUrl: String?,
     val about: String?
 )

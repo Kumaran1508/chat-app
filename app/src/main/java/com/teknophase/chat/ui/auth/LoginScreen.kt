@@ -2,6 +2,7 @@ package com.teknophase.chat.ui.auth
 
 import android.app.Activity
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.util.Log
 import android.widget.Toast
 import android.widget.Toast.LENGTH_SHORT
 import androidx.activity.compose.BackHandler
@@ -45,8 +46,10 @@ import com.teknophase.chat.data.request.AuthRequest
 import com.teknophase.chat.data.request.RegisterRequest
 import com.teknophase.chat.data.request.UpdateProfileRequest
 import com.teknophase.chat.data.response.AuthResponse
+import com.teknophase.chat.data.response.UserResponse
 import com.teknophase.chat.navigation.AppNavRoutes
 import com.teknophase.chat.navigation.BottomNavRoutes
+import com.teknophase.chat.network.SocketManager
 import com.teknophase.chat.network.repositories.AuthRepository
 import com.teknophase.chat.ui.common.AppTextField
 import com.teknophase.chat.ui.common.PrimaryButton
@@ -144,7 +147,8 @@ fun LoginScreen(
                 )
             },
             isError = isUsernameError,
-            errorText = stringResource(id = R.string.invalid_username)
+            errorText = stringResource(id = R.string.invalid_username),
+            modifier = Modifier.padding(bottom = padding_medium)
         )
 
         AppTextField(
@@ -154,8 +158,7 @@ fun LoginScreen(
                 loginViewModel.onPasswordChange(it)
                 isPasswordError = !passwordRegex.matches(it)
             },
-            modifier = Modifier
-                .padding(top = padding_large),
+            modifier = Modifier,
             placeholder = stringResource(id = R.string.type_something),
             maxLines = 1,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -230,6 +233,12 @@ fun LoginScreen(
             enabled = !isUsernameError && !isPasswordError
         ) {
             loginViewModel.onLoginClicked(context) {
+                try {
+                    SocketManager.getSocket()
+                } catch (e: Exception) {
+                    Log.e("SocketError", e.message.toString())
+                    e.printStackTrace()
+                }
                 onNavigate(BottomNavRoutes.CHAT.route)
             }
         }
@@ -257,6 +266,14 @@ fun LoginFormPreview() {
                 }
 
                 override suspend fun updateUserProfile(profileRequest: UpdateProfileRequest): Boolean {
+                    TODO("Not yet implemented")
+                }
+
+                override suspend fun getUserProfile(username: String): UserResponse {
+                    TODO("Not yet implemented")
+                }
+
+                override suspend fun getUserProfileById(id: String): UserResponse {
                     TODO("Not yet implemented")
                 }
             }),

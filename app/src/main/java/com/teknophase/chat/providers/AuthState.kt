@@ -27,6 +27,10 @@ object AuthState {
         return user
     }
 
+    fun getToken(): String? {
+        return authToken
+    }
+
     fun logout(context: Context) {
         isLoggedIn = false
         authToken = null

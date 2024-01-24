@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -88,8 +89,7 @@ fun SignUpForm1(
         var search by remember {
             mutableStateOf(state.value.countryCode ?: "")
         }
-        var selectedCode: CountryCodes
-        var phoneNumber = remember { mutableStateOf("") }
+        val phoneNumber = remember { mutableStateOf("") }
 
 
         Box(modifier = Modifier) {
@@ -109,7 +109,6 @@ fun SignUpForm1(
                             registerViewModel.changeCountryCode(country.code)
                             isExpanded = false
                             localFocusManager.clearFocus()
-                            selectedCode = country
                         },
                         text = {
                             Row(horizontalArrangement = Arrangement.SpaceBetween)
@@ -121,7 +120,7 @@ fun SignUpForm1(
                                     )
                                 )
                                 Text(
-                                    text = "${country.code}",
+                                    text = country.code,
                                     modifier = Modifier,
                                     textAlign = TextAlign.Right
                                 )
@@ -261,6 +260,7 @@ fun SignUpForm3(registerViewModel: RegisterViewModel = hiltViewModel()) {
                 }
             },
             singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             isError = !usernameValid || !state.value.usernameAvailable,
             errorText = if (!usernameValid) usernameInvalidMessage
             else if (!state.value.usernameAvailable) usernameUnavailableMessage
@@ -309,6 +309,8 @@ fun SignUpForm3(registerViewModel: RegisterViewModel = hiltViewModel()) {
                     }
                 )
             },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            singleLine = true,
             visualTransformation = passwordVisualisation.value,
             isError = !passwordRegex.matches(state.value.password.toString()),
             errorText = stringResource(R.string.invalid_password)
@@ -345,6 +347,8 @@ fun SignUpForm3(registerViewModel: RegisterViewModel = hiltViewModel()) {
                     }
                 )
             },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            singleLine = true,
             visualTransformation = passwordVisualisation.value,
             isError = state.value.password != state.value.repeatPassword,
             errorText = stringResource(R.string.unmatched_passwords)

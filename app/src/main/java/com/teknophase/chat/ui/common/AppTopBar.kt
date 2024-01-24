@@ -19,9 +19,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.sp
 import com.teknophase.chat.navigation.AppNavRoutes
+import com.teknophase.chat.network.SocketManager
 import com.teknophase.chat.providers.AuthState
+import com.teknophase.chat.ui.constants.text_normal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +50,13 @@ fun AppTopBar(
                 onDismissRequest = { showOptionMenu = false },
                 modifier = Modifier.background(MaterialTheme.colorScheme.background)
             ) {
-                DropdownMenuItem(text = { Text("Logout", fontSize = 16.sp) }, onClick = {
+                DropdownMenuItem(
+                    text = { Text(text = "Reconnect", fontSize = text_normal) },
+                    onClick = {
+                        SocketManager.getSocket().connect()
+                    })
+
+                DropdownMenuItem(text = { Text("Logout", fontSize = text_normal) }, onClick = {
                     // Handle the logout action
                     // TODO: Make menu dynamic
                     AuthState.logout(context)
