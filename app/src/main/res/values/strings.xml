@@ -30,4 +30,5 @@
     <string name="username_support_text">"Username must be between 4 to 20 characters"</string>
     <string name="unmatched_passwords">Passwords does not match</string>
     <string name="offline">offline</string>
+    <string name="title_activity_bootstrap">BootstrapActivity</string>
 </resources>

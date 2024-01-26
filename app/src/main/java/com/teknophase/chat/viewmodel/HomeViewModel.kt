@@ -34,6 +34,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.util.Date
 import java.util.UUID
 import javax.inject.Inject
 
@@ -97,9 +98,10 @@ class HomeViewModel @Inject constructor(
 
         GlobalScope.launch(Dispatchers.IO) {
             try {
-                val message: Message = gson
+                var message: Message = gson
                     .fromJson(_message[0].toString(), Message::class.java)
                 val userList = _chatState.value.userList.toMutableMap()
+                message = message.copy(receivedAt = Date())
 
                 if (!userList.containsKey(message.source)) {
                     var chatListModel = createChatListModel(message)
@@ -127,7 +129,7 @@ class HomeViewModel @Inject constructor(
                     val chatListModel = userList[message.source]!!.copy(
                         unread = count,
                         message = message.content,
-                        time = getFormattedTimeForMessage(message.sentAt)
+                        time = getFormattedTimeForMessage(message.receivedAt!!)
                     )
                     userList[message.source] = chatListModel
                     AppDatabase.db?.chatListRepository()?.update(chatListModel)
@@ -392,7 +394,7 @@ class HomeViewModel @Inject constructor(
             username = username,
             name = if (user?.displayName != null) user.displayName else username,
             message = message.content,
-            time = getFormattedTimeForMessage(message.sentAt),
+            time = getFormattedTimeForMessage(if (isSent) message.sentAt else message.receivedAt!!),
             profileUrl = if (user?.profileUrl != null) user.profileUrl else "",
             unread = if (isSent) null else 1,
             userId = UUID.randomUUID().toString()
@@ -430,7 +432,7 @@ class HomeViewModel @Inject constructor(
                     profileUrl = user.profileUrl ?: "",
                     name = user.displayName ?: "",
                 )
-                _chatState.value = _chatState.value.copy(userList = userList,fetchedUser = user)
+                _chatState.value = _chatState.value.copy(userList = userList, fetchedUser = user)
                 AppDatabase.db?.chatListRepository()?.save(userListModel)
             } catch (e: Exception) {
                 Log.e("RetrofitError", "Unable to fetch user. ${e.message.toString()}")
