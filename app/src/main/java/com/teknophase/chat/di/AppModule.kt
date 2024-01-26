@@ -2,6 +2,7 @@ package com.teknophase.chat.di
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.teknophase.chat.config.AppConfig
 import com.teknophase.chat.data.model.DestinationTypeDeserializer
 import com.teknophase.chat.data.model.MessageDestinationType
 import com.teknophase.chat.data.model.MessageStatus
@@ -9,10 +10,13 @@ import com.teknophase.chat.data.model.MessageStatusDeserializer
 import com.teknophase.chat.data.model.MessageType
 import com.teknophase.chat.data.model.MessageTypeDeserializer
 import com.teknophase.chat.network.repositories.ApiAuthRepository
+import com.teknophase.chat.network.repositories.AppConfigRepository
 import com.teknophase.chat.network.repositories.AuthRepository
 import com.teknophase.chat.network.repositories.MessageRepository
 import com.teknophase.chat.network.repositories.SocketMessageRepository
+import com.teknophase.chat.network.services.AppConfigService
 import com.teknophase.chat.network.services.AuthService
+import com.teknophase.chat.viewmodel.BootstrapViewModel
 import com.teknophase.chat.viewmodel.HomeViewModel
 import com.teknophase.chat.viewmodel.LoginViewModel
 import dagger.Module
@@ -76,4 +80,21 @@ object AppModule {
             .create()
     }
 
+    @Provides
+    @Singleton
+    fun providesAppConfigRepository(appConfigService: AppConfigService): AppConfigRepository {
+        return AppConfigRepository(appConfigService = appConfigService)
+    }
+
+    @Provides
+    @Singleton
+    fun providesAppConfig(appConfigRepository: AppConfigRepository): AppConfig {
+        return AppConfig(appConfigRepository = appConfigRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun providesBootstrapViewModel(appConfig: AppConfig): BootstrapViewModel {
+        return BootstrapViewModel(appConfig = appConfig)
+    }
 }
