@@ -303,7 +303,7 @@ class HomeViewModel @Inject constructor(
 
             val userList = _chatState.value.userList.toMutableMap()
             if (!userList.containsKey(message.destination)) {
-                var chatListModel = createChatListModel(message, chatState.value.fetchedUser)
+                val chatListModel = createChatListModel(message, chatState.value.fetchedUser)
                 try {
                     userList[message.destination] = chatListModel
                     AppDatabase.db?.chatListRepository()?.save(chatListModel)
@@ -338,8 +338,7 @@ class HomeViewModel @Inject constructor(
 
             handler?.postDelayed({
                 GlobalScope.launch(Dispatchers.IO) {
-                    if (!chatState.value.messages.filter { it.messageId == messageRequest.requestId }
-                            .isEmpty()) {
+                    if (!chatState.value.messages.none { it.messageId == messageRequest.requestId }) {
                         val updatedMessage = message.copy(messageStatus = MessageStatus.FAILED)
                         val messages = chatState.value.messages.map {
                             if (it.messageId == messageRequest.requestId) updatedMessage
@@ -423,8 +422,16 @@ class HomeViewModel @Inject constructor(
     fun setUser(username: String) {
         GlobalScope.launch(Dispatchers.IO) {
             try {
-                val user = authRepository.getUserProfile(username)
-                _chatState.value = _chatState.value.copy(fetchedUser = user)
+                val user: UserResponse = authRepository.getUserProfile(username)
+                val userList = _chatState.value.userList.toMutableMap()
+                val userListModel = userList[username]!!
+                userList[username] = userListModel.copy(
+                    username = username,
+                    profileUrl = user.profileUrl ?: "",
+                    name = user.displayName ?: "",
+                )
+                _chatState.value = _chatState.value.copy(userList = userList,fetchedUser = user)
+                AppDatabase.db?.chatListRepository()?.save(userListModel)
             } catch (e: Exception) {
                 Log.e("RetrofitError", "Unable to fetch user. ${e.message.toString()}")
             }
