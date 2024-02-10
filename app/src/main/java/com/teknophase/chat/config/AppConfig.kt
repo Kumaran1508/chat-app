@@ -40,6 +40,7 @@ class AppConfig @Inject constructor(private val appConfigRepository: AppConfigRe
             onNetworkDisconnected = { onNetworkDisconnected() }
         )
         if (!offlineMode.value) {
+            // TODO: Add try catch
             minAppVersion = appConfigRepository.getMinAppVersion()
             latestAppVersion = appConfigRepository.getLatestAppVersion()
         }

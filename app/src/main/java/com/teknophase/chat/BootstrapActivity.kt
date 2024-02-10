@@ -3,6 +3,7 @@ package com.teknophase.chat
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -73,7 +74,13 @@ class BootstrapActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             viewModel.initialize(applicationContext)
-            if (!viewModel.isUpdateRequired()) {
+            var isUpdateRequired = false
+            try {
+                isUpdateRequired = viewModel.isUpdateRequired()
+            } catch (e: Exception) {
+                Log.w("BootStrap","Error connecting to the Server")
+            }
+            if (!isUpdateRequired) {
                 Handler(mainLooper).postDelayed({
                     val intent = Intent(baseContext, MainActivity::class.java)
                     startActivity(intent)
@@ -81,21 +88,5 @@ class BootstrapActivity : ComponentActivity() {
                 }, SPLASH_TIME_OUT)
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    ChatTheme {
-        Greeting("Android")
     }
 }

@@ -1,4 +1,4 @@
-package com.teknophase.chat.ui.chatlist
+package com.teknophase.chat.data.model
 
 enum class ChatType {
     DirectMessage,

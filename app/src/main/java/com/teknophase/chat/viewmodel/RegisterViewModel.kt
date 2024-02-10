@@ -74,7 +74,7 @@ class RegisterViewModel @Inject constructor(private val authRepository: AuthRepo
                                 if (registered) _registerState.value =
                                     _registerState.value.copy(
                                         isValid = true,
-                                        registrationPage = USERNAME_MIN_LENGTH
+                                        registrationPage = registerState.value.registrationPage + 1
                                     )
                                 else {
                                     _registerState.value =

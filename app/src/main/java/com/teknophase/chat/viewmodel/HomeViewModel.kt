@@ -4,7 +4,9 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.teknophase.chat.data.AppDatabase
 import com.teknophase.chat.data.model.ChatListModel
 import com.teknophase.chat.data.model.Message
@@ -30,13 +32,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.socket.client.Socket
 import io.socket.emitter.Emitter
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.UUID
 import javax.inject.Inject
+
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -47,13 +50,13 @@ class HomeViewModel @Inject constructor(
     ViewModel() {
     private var _chatState: MutableStateFlow<ChatState> = MutableStateFlow(ChatState())
     val chatState: StateFlow<ChatState> = _chatState
-    private val apiCooldownMillis = 1000L  // Cooldown time in milliseconds
+    private val apiCoolDownMillis = 1000L  // cool down time in milliseconds
     private val messageTimeoutMillis = 15000L  // Message Timeout in milliseconds
     private val handler = Looper.myLooper()?.let { Handler(it) }
     private var runnable: Runnable? = null
 
     init {
-        GlobalScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             val chatList =
                 AppDatabase.db?.chatListRepository()?.getAll()?.associateBy { it.username }
             chatList?.let {
@@ -67,18 +70,19 @@ class HomeViewModel @Inject constructor(
             messageRepository.addOnAcknowledgeListener(acknowledgeListener)
             messageRepository.addOnDeliveredListener(deliveredListener)
             messageRepository.addOnReadListener(readListener)
+            messageRepository.addOnQueueListener(queueListener)
 
             try {
                 val socket = SocketManager.getSocket()
                 socket.on(Socket.EVENT_CONNECT) {
                     messages?.filter {
-                        it.messageStatus == MessageStatus.QUEUED
+                        it.messageStatus == MessageStatus.QUEUED && it.source == AuthState.getUser()!!.username
                     }?.forEach {
-                        GlobalScope.launch(Dispatchers.IO) {
+                        viewModelScope.launch(Dispatchers.IO) {
                             val messageRequest = MessageRequest(
                                 requestId = it.messageId,
-                                sender = it.source,
-                                receiver = it.destination,
+                                source = it.source,
+                                destination = it.destination,
                                 content = it.content,
                                 sentAt = it.sentAt
                             )
@@ -86,83 +90,29 @@ class HomeViewModel @Inject constructor(
                         }
                     }
                 }
+
+                socket.emit("queue")
             } catch (e: Exception) {
                 Log.e("SocketError", "Error initialising onConnect event")
             }
         }
     }
 
-
-    private val chatListener = Emitter.Listener { _message ->
-        Log.d(SOCKET_CHAT_MESSAGE, _message[0].toString())
-
-        GlobalScope.launch(Dispatchers.IO) {
+    private val queueListener = Emitter.Listener { data ->
+        val sample = data[0]
+        Log.d("sample", sample.toString())
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                var message: Message = gson
-                    .fromJson(_message[0].toString(), Message::class.java)
-                val userList = _chatState.value.userList.toMutableMap()
-                message = message.copy(receivedAt = Date())
 
-                if (!userList.containsKey(message.source)) {
-                    var chatListModel = createChatListModel(message)
-                    try {
-                        val user = authRepository.getUserProfile(message.source)
-                        chatListModel = createChatListModel(message, user)
-                    } catch (e: Exception) {
-                        Log.e(
-                            "RetrofitError",
-                            "Unable to fetch user profile. " + e.message.toString()
-                        )
-                    }
-                    try {
-                        userList[message.source] = chatListModel
-                        AppDatabase.db?.chatListRepository()?.save(chatListModel)
-                    } catch (e: Exception) {
-                        Log.e("RoomError", "Unable to store user profile. " + e.message.toString())
-                    }
-
-                } else {
-                    var count = userList[message.source]!!.unread
-                    val isSent = message.source == AuthState.getUser()?.username
-                    if (!isSent && count != null) count += 1
-                    if (!isSent && count == null) count = 1
-                    val chatListModel = userList[message.source]!!.copy(
-                        unread = count,
-                        message = message.content,
-                        time = getFormattedTimeForMessage(message.receivedAt!!)
+                val messages: List<Message> = gson
+                    .fromJson(
+                        sample
+                            .toString(), object : TypeToken<List<Message?>?>() {}.type
                     )
-                    userList[message.source] = chatListModel
-                    AppDatabase.db?.chatListRepository()?.update(chatListModel)
-                }
-
-                val updatedMessages = _chatState.value.messages.plusElement(message)
-                _chatState.value = _chatState.value.copy(
-                    messages = updatedMessages,
-                    userList = userList
-                )
-
-                val deliveredModel = MessageDeliveredModel(
-                    messageId = message.messageId,
-                    source = message.source,
-                    acknowledgedBy = AuthState.getUser()!!.username
-                )
-                AppDatabase.db?.messageRepository()
-                    ?.save(
-                        message.copy(
-                            delivered = true,
-                            messageStatus = MessageStatus.DELIVERED
-                        )
-                    )
-                messageRepository.onDelivered(deliveredModel)
-                if (chatState.value.fetchedUser != null
-                    && chatState.value.fetchedUser?.username == message.source
-                ) {
-                    val readModel = MessageReadModel(
-                        messageId = message.messageId,
-                        source = message.source,
-                        acknowledgedBy = AuthState.getUser()!!.username
-                    )
-                    messageRepository.onRead(readModel)
+                for (receivedMessage in messages) {
+                    val message = receivedMessage.copy(receivedAt = Date())
+                    handleMessageReceive(message)
+                    delay(50)
                 }
 
             } catch (e: Exception) {
@@ -172,11 +122,30 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private val acknowledgeListener = Emitter.Listener { _acknowledge ->
-        Log.d(SOCKET_CHAT_ACKNOWLEDGE, _acknowledge[0].toString())
+
+    private val chatListener = Emitter.Listener { data ->
+        Log.d(SOCKET_CHAT_MESSAGE, data[0].toString())
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                var message: Message = gson
+                    .fromJson(data[0].toString(), Message::class.java)
+                message = message.copy(receivedAt = Date(), delivered = true)
+
+                handleMessageReceive(message)
+
+            } catch (e: Exception) {
+                Log.e("MessageParseError", "Unable to parse received message" + e.message)
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private val acknowledgeListener = Emitter.Listener { data ->
+        Log.d(SOCKET_CHAT_ACKNOWLEDGE, data[0].toString())
         try {
             val acknowledgeResponse =
-                Gson().fromJson(_acknowledge[0].toString(), MessageAcknowledgeResponse::class.java)
+                Gson().fromJson(data[0].toString(), MessageAcknowledgeResponse::class.java)
             var messages = _chatState.value.messages
 
             messages = messages.map {
@@ -185,7 +154,7 @@ class HomeViewModel @Inject constructor(
                         messageId = acknowledgeResponse.messageId,
                         messageStatus = MessageStatus.SENT
                     )
-                    GlobalScope.launch(Dispatchers.IO) {
+                    viewModelScope.launch(Dispatchers.IO) {
                         try {
                             AppDatabase.db?.messageRepository()?.delete(it)
                             AppDatabase.db?.messageRepository()?.save(updatedMessage)
@@ -206,11 +175,11 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private val deliveredListener = Emitter.Listener { _deliveredModel ->
-        Log.d(SOCKET_CHAT_DELIVERED, _deliveredModel[0].toString())
+    private val deliveredListener = Emitter.Listener { data ->
+        Log.d(SOCKET_CHAT_DELIVERED, data[0].toString())
         try {
             val deliveredModel =
-                Gson().fromJson(_deliveredModel[0].toString(), MessageDeliveredModel::class.java)
+                Gson().fromJson(data[0].toString(), MessageDeliveredModel::class.java)
             var messages = _chatState.value.messages
 
             messages = messages.map {
@@ -220,7 +189,7 @@ class HomeViewModel @Inject constructor(
                         delivered = true,
                         receivedAt = deliveredModel.deliveredAt
                     )
-                    GlobalScope.launch(Dispatchers.IO) {
+                    viewModelScope.launch(Dispatchers.IO) {
                         try {
                             AppDatabase.db?.messageRepository()?.update(updatedMessage)
                         } catch (e: Exception) {
@@ -240,11 +209,11 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private val readListener = Emitter.Listener { _readModel ->
-        Log.d(SOCKET_CHAT_READ, _readModel[0].toString())
+    private val readListener = Emitter.Listener { data ->
+        Log.d(SOCKET_CHAT_READ, data[0].toString())
         try {
             val readModel =
-                Gson().fromJson(_readModel[0].toString(), MessageReadModel::class.java)
+                Gson().fromJson(data[0].toString(), MessageReadModel::class.java)
             var messages = _chatState.value.messages
 
             messages = messages.map {
@@ -254,7 +223,7 @@ class HomeViewModel @Inject constructor(
                         read = true,
                         readAt = readModel.readAt
                     )
-                    GlobalScope.launch(Dispatchers.IO) {
+                    viewModelScope.launch(Dispatchers.IO) {
                         try {
                             AppDatabase.db?.messageRepository()?.update(updatedMessage)
                         } catch (e: Exception) {
@@ -274,6 +243,77 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    private suspend fun handleMessageReceive(message: Message) {
+        if (_chatState.value.messages.none { it.messageId == message.messageId }) {
+            val userList = _chatState.value.userList.toMutableMap()
+            if (!userList.containsKey(message.source)) {
+                var chatListModel = createChatListModel(message)
+                try {
+                    val user = authRepository.getUserProfile(message.source)
+                    chatListModel = createChatListModel(message, user)
+                } catch (e: Exception) {
+                    Log.e(
+                        "RetrofitError",
+                        "Unable to fetch user profile. " + e.message.toString()
+                    )
+                }
+                try {
+                    userList[message.source] = chatListModel
+                    AppDatabase.db?.chatListRepository()?.save(chatListModel)
+                } catch (e: Exception) {
+                    Log.e("RoomError", "Unable to store user profile. " + e.message.toString())
+                }
+
+            } else {
+                var count = userList[message.source]!!.unread
+                val isSent = message.source == AuthState.getUser()?.username
+                if (!isSent && count != null) count += 1
+                if (!isSent && count == null) count = 1
+                val chatListModel = userList[message.source]!!.copy(
+                    unread = count,
+                    message = message.content,
+                    time = getFormattedTimeForMessage(message.receivedAt!!)
+                )
+                userList[message.source] = chatListModel
+                AppDatabase.db?.chatListRepository()?.update(chatListModel)
+            }
+
+            val updatedMessages = _chatState.value.messages.plusElement(message)
+            _chatState.value = _chatState.value.copy(
+                messages = updatedMessages,
+                userList = userList
+            )
+
+            val deliveredModel = MessageDeliveredModel(
+                messageId = message.messageId,
+                source = message.source,
+                acknowledgedBy = AuthState.getUser()!!.username
+            )
+            try {
+                AppDatabase.db?.messageRepository()
+                    ?.save(
+                        message.copy(
+                            delivered = true,
+                            messageStatus = MessageStatus.DELIVERED
+                        )
+                    )
+            } catch (e: Exception) {
+                Log.d("RoomError", e.message.toString())
+            }
+            messageRepository.onDelivered(deliveredModel)
+            if (chatState.value.fetchedUser != null
+                && chatState.value.fetchedUser?.username == message.source
+            ) {
+                val readModel = MessageReadModel(
+                    messageId = message.messageId,
+                    source = message.source,
+                    acknowledgedBy = AuthState.getUser()!!.username
+                )
+                messageRepository.onRead(readModel)
+            }
+        }
+    }
+
     fun onMessageChange(text: String) {
         _chatState.value = _chatState.value.copy(clipBoard = text)
     }
@@ -281,14 +321,14 @@ class HomeViewModel @Inject constructor(
     fun onSend(username: String) {
         if (chatState.value.clipBoard.isEmpty()) return
         val messageRequest = MessageRequest(
-            sender = AuthState.getUser()?.username.toString(),
-            receiver = username,
+            source = AuthState.getUser()?.username.toString(),
+            destination = username,
             content = chatState.value.clipBoard
         )
         val message = Message(
             messageId = messageRequest.requestId,
-            source = messageRequest.sender,
-            destination = messageRequest.receiver,
+            source = messageRequest.source,
+            destination = messageRequest.destination,
             content = messageRequest.content,
             destinationType = MessageDestinationType.values()[messageRequest.destinationType], // Todo: Make this future proof by adding default
             sentAt = messageRequest.sentAt,
@@ -296,7 +336,7 @@ class HomeViewModel @Inject constructor(
             hasAttachment = messageRequest.hasAttachment
         )
 
-        GlobalScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             if (SocketManager.isConnected.value) {
                 messageRepository.sendMessage(messageRequest)
                 Log.d("Sent", messageRequest.toString())
@@ -339,7 +379,7 @@ class HomeViewModel @Inject constructor(
             }
 
             handler?.postDelayed({
-                GlobalScope.launch(Dispatchers.IO) {
+                viewModelScope.launch(Dispatchers.IO) {
                     if (!chatState.value.messages.none { it.messageId == messageRequest.requestId }) {
                         val updatedMessage = message.copy(messageStatus = MessageStatus.FAILED)
                         val messages = chatState.value.messages.map {
@@ -363,7 +403,7 @@ class HomeViewModel @Inject constructor(
             userList = userList
         )
 
-        GlobalScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             val userMessages = chatState.value.messages.filter {
                 it.source == username &&
                         it.read != true
@@ -402,7 +442,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun checkUsernameAvailability(username: String) {
-        GlobalScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             _chatState.value = _chatState.value.copy(checkingUsername = true)
             if (username.isNotEmpty()) {
                 try {
@@ -422,7 +462,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun setUser(username: String) {
-        GlobalScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val user: UserResponse = authRepository.getUserProfile(username)
                 val userList = _chatState.value.userList.toMutableMap()
@@ -445,13 +485,13 @@ class HomeViewModel @Inject constructor(
             handler?.removeCallbacks(it)
         }
 
-        // Schedule a new runnable after the cooldown period
+        // Schedule a new runnable after the cool down period
         runnable = Runnable {
             // Call your API function here
             checkUsernameAvailability(username)
         }
 
-        handler?.postDelayed(runnable!!, apiCooldownMillis)
+        handler?.postDelayed(runnable!!, apiCoolDownMillis)
     }
 
     fun clearFetchedUser() {

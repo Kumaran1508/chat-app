@@ -6,8 +6,8 @@ import java.util.Date
 import java.util.UUID
 
 data class MessageRequest(
-    val sender: String,
-    val receiver: String,
+    val source: String,
+    val destination: String,
     val content: String,
     val sentAt: Date = Date(),
     val messageType: Int = MessageType.DEFAULT.ordinal,

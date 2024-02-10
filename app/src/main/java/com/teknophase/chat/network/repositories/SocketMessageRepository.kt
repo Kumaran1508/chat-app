@@ -64,4 +64,8 @@ class SocketMessageRepository : MessageRepository {
             gson.toJson(readModel)
         )
     }
+
+    override suspend fun addOnQueueListener(onQueue: Emitter.Listener) {
+        SocketManager.getSocket().on("queue", onQueue)
+    }
 }

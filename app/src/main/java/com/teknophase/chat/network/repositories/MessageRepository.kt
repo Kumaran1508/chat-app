@@ -15,6 +15,7 @@ interface MessageRepository {
     suspend fun addOnAcknowledgeListener(onAcknowledge: Emitter.Listener)
     suspend fun addOnReadListener(onRead: Emitter.Listener)
     suspend fun addOnDeliveredListener(onDelivered: Emitter.Listener)
+    suspend fun addOnQueueListener(onQueue: Emitter.Listener)
     suspend fun onDelivered(deliveredModel: MessageDeliveredModel)
     suspend fun onRead(readModel: MessageReadModel)
 }
