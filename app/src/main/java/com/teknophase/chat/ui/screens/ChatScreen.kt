@@ -12,17 +12,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Start
 import androidx.compose.ui.Modifier
@@ -43,6 +42,9 @@ import com.teknophase.chat.ui.constants.size_64
 import com.teknophase.chat.ui.theme.PrimaryBlueVariant
 import com.teknophase.chat.ui.theme.errorRed
 import com.teknophase.chat.viewmodel.HomeViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun ChatScreen(
@@ -54,17 +56,21 @@ fun ChatScreen(
     val currentUser = AuthState.getUser()?.username.toString()
     val isConnected = SocketManager.isConnected.collectAsState()
     val user = state.value.fetchedUser
-    val messages = state.value.messages
-    var chat by remember {
-        mutableStateOf(messages.filter {
-            it.source == username || it.destination == username
-        })
+    var messages = state.value.messages.sortedBy {
+        if (it.source == currentUser) it.sentAt else it.receivedAt
+    }
+    var chat = messages.filter {
+        it.source == username || it.destination == username
     }
 
-    SideEffect {
+    val scrollState = rememberLazyListState()
+
+    LaunchedEffect(key1 = state) {
+        messages = state.value.messages
         chat = messages.filter {
             it.source == username || it.destination == username
         }
+        scrollToBottom(scrollState)
     }
 
     BackHandler {
@@ -87,10 +93,11 @@ fun ChatScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(padding_small)
+                .padding(padding_small),
+            state = scrollState
         ) {
-            items(chat.size) { index ->
-                val message = state.value.messages[index]
+            items(chat) { message ->
+//                val message = state.value.messages[index]
                 MessageComposable(
                     message = message,
                     isSent = message.source == currentUser,
@@ -137,6 +144,7 @@ fun ChatScreen(
             IconButton(
                 onClick = {
                     if (state.value.clipBoard.isNotEmpty()) homeViewModel.onSend(username)
+                    scrollToBottom(scrollState)
                 }, modifier = Modifier
                     .padding(horizontal = padding_small)
                     .size(size_48)
@@ -151,5 +159,14 @@ fun ChatScreen(
             }
         }
 
+    }
+}
+
+fun scrollToBottom(scrollState: LazyListState) {
+    // Calculate the index of the last item
+    val lastIndex = scrollState.layoutInfo.totalItemsCount - 1
+    // Scroll to the last item
+    GlobalScope.launch(Dispatchers.Main) {
+        scrollState.scrollToItem(lastIndex)
     }
 }

@@ -62,8 +62,9 @@ fun MessageComposable(message: Message, isSent: Boolean, modifier: Modifier = Mo
             )
 
             Row(modifier = Modifier.align(End)) {
+                val time = if (isSent) message.sentAt else message.receivedAt
                 Text(
-                    text = getFormattedTimeForMessage(message.sentAt),
+                    text = getFormattedTimeForMessage(time),
                     fontSize = text_small,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -4,7 +4,6 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.teknophase.chat.data.AppDatabase
@@ -32,6 +31,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.socket.client.Socket
 import io.socket.emitter.Emitter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -56,7 +56,7 @@ class HomeViewModel @Inject constructor(
     private var runnable: Runnable? = null
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
+        GlobalScope.launch(Dispatchers.IO) {
             val chatList =
                 AppDatabase.db?.chatListRepository()?.getAll()?.associateBy { it.username }
             chatList?.let {
@@ -78,7 +78,7 @@ class HomeViewModel @Inject constructor(
                     messages?.filter {
                         it.messageStatus == MessageStatus.QUEUED && it.source == AuthState.getUser()!!.username
                     }?.forEach {
-                        viewModelScope.launch(Dispatchers.IO) {
+                        GlobalScope.launch(Dispatchers.IO) {
                             val messageRequest = MessageRequest(
                                 requestId = it.messageId,
                                 source = it.source,
@@ -99,14 +99,14 @@ class HomeViewModel @Inject constructor(
     }
 
     private val queueListener = Emitter.Listener { data ->
-        val sample = data[0]
-        Log.d("sample", sample.toString())
-        viewModelScope.launch(Dispatchers.IO) {
+        val messagesJson = data[0]
+        Log.d("sample", messagesJson.toString())
+        GlobalScope.launch(Dispatchers.IO) {
             try {
 
                 val messages: List<Message> = gson
                     .fromJson(
-                        sample
+                        messagesJson
                             .toString(), object : TypeToken<List<Message?>?>() {}.type
                     )
                 for (receivedMessage in messages) {
@@ -126,7 +126,7 @@ class HomeViewModel @Inject constructor(
     private val chatListener = Emitter.Listener { data ->
         Log.d(SOCKET_CHAT_MESSAGE, data[0].toString())
 
-        viewModelScope.launch(Dispatchers.IO) {
+        GlobalScope.launch(Dispatchers.IO) {
             try {
                 var message: Message = gson
                     .fromJson(data[0].toString(), Message::class.java)
@@ -154,7 +154,7 @@ class HomeViewModel @Inject constructor(
                         messageId = acknowledgeResponse.messageId,
                         messageStatus = MessageStatus.SENT
                     )
-                    viewModelScope.launch(Dispatchers.IO) {
+                    GlobalScope.launch(Dispatchers.IO) {
                         try {
                             AppDatabase.db?.messageRepository()?.delete(it)
                             AppDatabase.db?.messageRepository()?.save(updatedMessage)
@@ -189,7 +189,7 @@ class HomeViewModel @Inject constructor(
                         delivered = true,
                         receivedAt = deliveredModel.deliveredAt
                     )
-                    viewModelScope.launch(Dispatchers.IO) {
+                    GlobalScope.launch(Dispatchers.IO) {
                         try {
                             AppDatabase.db?.messageRepository()?.update(updatedMessage)
                         } catch (e: Exception) {
@@ -223,7 +223,7 @@ class HomeViewModel @Inject constructor(
                         read = true,
                         readAt = readModel.readAt
                     )
-                    viewModelScope.launch(Dispatchers.IO) {
+                    GlobalScope.launch(Dispatchers.IO) {
                         try {
                             AppDatabase.db?.messageRepository()?.update(updatedMessage)
                         } catch (e: Exception) {
@@ -336,7 +336,7 @@ class HomeViewModel @Inject constructor(
             hasAttachment = messageRequest.hasAttachment
         )
 
-        viewModelScope.launch(Dispatchers.IO) {
+        GlobalScope.launch(Dispatchers.IO) {
             if (SocketManager.isConnected.value) {
                 messageRepository.sendMessage(messageRequest)
                 Log.d("Sent", messageRequest.toString())
@@ -379,7 +379,7 @@ class HomeViewModel @Inject constructor(
             }
 
             handler?.postDelayed({
-                viewModelScope.launch(Dispatchers.IO) {
+                GlobalScope.launch(Dispatchers.IO) {
                     if (!chatState.value.messages.none { it.messageId == messageRequest.requestId }) {
                         val updatedMessage = message.copy(messageStatus = MessageStatus.FAILED)
                         val messages = chatState.value.messages.map {
@@ -403,7 +403,7 @@ class HomeViewModel @Inject constructor(
             userList = userList
         )
 
-        viewModelScope.launch(Dispatchers.IO) {
+        GlobalScope.launch(Dispatchers.IO) {
             val userMessages = chatState.value.messages.filter {
                 it.source == username &&
                         it.read != true
@@ -442,7 +442,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun checkUsernameAvailability(username: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+        GlobalScope.launch(Dispatchers.IO) {
             _chatState.value = _chatState.value.copy(checkingUsername = true)
             if (username.isNotEmpty()) {
                 try {
@@ -462,18 +462,20 @@ class HomeViewModel @Inject constructor(
     }
 
     fun setUser(username: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+        GlobalScope.launch(Dispatchers.IO) {
             try {
                 val user: UserResponse = authRepository.getUserProfile(username)
                 val userList = _chatState.value.userList.toMutableMap()
                 val userListModel = userList[username]!!
+
                 userList[username] = userListModel.copy(
                     username = username,
                     profileUrl = user.profileUrl ?: "",
                     name = user.displayName ?: "",
                 )
+
                 _chatState.value = _chatState.value.copy(userList = userList, fetchedUser = user)
-                AppDatabase.db?.chatListRepository()?.save(userListModel)
+                AppDatabase.db?.chatListRepository()?.update(userListModel)
             } catch (e: Exception) {
                 Log.e("RetrofitError", "Unable to fetch user. ${e.message.toString()}")
             }
@@ -487,7 +489,6 @@ class HomeViewModel @Inject constructor(
 
         // Schedule a new runnable after the cool down period
         runnable = Runnable {
-            // Call your API function here
             checkUsernameAvailability(username)
         }
 
