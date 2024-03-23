@@ -41,6 +41,7 @@ import com.teknophase.chat.ui.constants.size_48
 import com.teknophase.chat.ui.constants.size_64
 import com.teknophase.chat.ui.theme.PrimaryBlueVariant
 import com.teknophase.chat.ui.theme.errorRed
+import com.teknophase.chat.util.getFormattedTimeForMessage
 import com.teknophase.chat.viewmodel.HomeViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -55,7 +56,7 @@ fun ChatScreen(
     val state = homeViewModel.chatState.collectAsState()
     val currentUser = AuthState.getUser()?.username.toString()
     val isConnected = SocketManager.isConnected.collectAsState()
-    val user = state.value.fetchedUser
+    var user = state.value.userList[username]
     var messages = state.value.messages.sortedBy {
         if (it.source == currentUser) it.sentAt else it.receivedAt
     }
@@ -81,9 +82,9 @@ fun ChatScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         ChatHeader(
-            displayName = if (user?.displayName != null) user.displayName else username,
+            displayName = user?.name ?: "",
             profileUrl = user?.profileUrl,
-            about = user?.about,
+            about = if (user?.isOnline == true) "Online" else getFormattedTimeForMessage(user?.lastOnline),
             username = username
         )
 

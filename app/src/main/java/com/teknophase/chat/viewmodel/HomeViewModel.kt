@@ -17,6 +17,7 @@ import com.teknophase.chat.data.model.MessageType
 import com.teknophase.chat.data.request.MessageRequest
 import com.teknophase.chat.data.response.MessageAcknowledgeResponse
 import com.teknophase.chat.data.response.UserResponse
+import com.teknophase.chat.data.response.UserUpdateResponse
 import com.teknophase.chat.data.state.ChatState
 import com.teknophase.chat.network.SocketManager
 import com.teknophase.chat.network.repositories.AuthRepository
@@ -25,6 +26,7 @@ import com.teknophase.chat.network.repositories.SOCKET_CHAT_ACKNOWLEDGE
 import com.teknophase.chat.network.repositories.SOCKET_CHAT_DELIVERED
 import com.teknophase.chat.network.repositories.SOCKET_CHAT_MESSAGE
 import com.teknophase.chat.network.repositories.SOCKET_CHAT_READ
+import com.teknophase.chat.network.repositories.SOCKET_USER_UPDATE
 import com.teknophase.chat.providers.AuthState
 import com.teknophase.chat.util.getFormattedTimeForMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -62,6 +64,7 @@ class HomeViewModel @Inject constructor(
             chatList?.let {
                 _chatState.value = _chatState.value.copy(userList = it)
             }
+
             val messages = AppDatabase.db?.messageRepository()?.getAll()
             messages?.let {
                 _chatState.value = _chatState.value.copy(messages = it)
@@ -71,6 +74,19 @@ class HomeViewModel @Inject constructor(
             messageRepository.addOnDeliveredListener(deliveredListener)
             messageRepository.addOnReadListener(readListener)
             messageRepository.addOnQueueListener(queueListener)
+            chatList?.keys?.forEach { username ->
+                messageRepository.addOnUserUpdateListener(username) { data ->
+                    Log.d(SOCKET_USER_UPDATE, data[0].toString())
+                    try {
+                        val userUpdateResponse =
+                            Gson().fromJson(data[0].toString(), UserUpdateResponse::class.java)
+                        onUserUpdate(userUpdateResponse)
+
+                    } catch (e: Exception) {
+                        Log.e("UserUpdateParseError", "Unable to parse UserUpdateResponse")
+                    }
+                }
+            }
 
             try {
                 val socket = SocketManager.getSocket()
@@ -87,6 +103,7 @@ class HomeViewModel @Inject constructor(
                                 sentAt = it.sentAt
                             )
                             messageRepository.sendMessage(messageRequest)
+                            delay(50)
                         }
                     }
                 }
@@ -240,6 +257,27 @@ class HomeViewModel @Inject constructor(
                 )
         } catch (e: Exception) {
             Log.e("ReadParseError", "Unable to parse Read message")
+        }
+    }
+
+    private fun onUserUpdate(userUpdateResponse: UserUpdateResponse) {
+        try {
+            val userList = _chatState.value.userList.toMutableMap()
+            if (userList.containsKey(userUpdateResponse.username)) {
+                var userListItem = userList[userUpdateResponse.username]!!
+
+                if (userUpdateResponse.isOnline != null)
+                    userListItem = userListItem.copy(isOnline = userUpdateResponse.isOnline)
+                if (userUpdateResponse.lastOnline != null)
+                    userListItem = userListItem.copy(lastOnline = userUpdateResponse.lastOnline)
+
+                userList[userUpdateResponse.username] = userListItem
+
+                _chatState.value = _chatState.value.copy(userList = userList)
+                AppDatabase.db?.chatListRepository()?.update(userListItem)
+            }
+        } catch (e: Exception) {
+            Log.e("UserUpdateParseError", "Unable to update UserUpdateStatus")
         }
     }
 
@@ -437,7 +475,9 @@ class HomeViewModel @Inject constructor(
             time = getFormattedTimeForMessage(if (isSent) message.sentAt else message.receivedAt!!),
             profileUrl = if (user?.profileUrl != null) user.profileUrl else "",
             unread = if (isSent) null else 1,
-            userId = UUID.randomUUID().toString()
+            userId = UUID.randomUUID().toString(),
+            isOnline = user?.isOnline,
+            lastOnline = user?.lastOnline
         )
     }
 

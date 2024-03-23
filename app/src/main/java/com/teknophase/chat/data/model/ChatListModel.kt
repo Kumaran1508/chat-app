@@ -2,7 +2,7 @@ package com.teknophase.chat.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.util.UUID
+import java.util.Date
 
 @Entity
 data class ChatListModel(
@@ -13,5 +13,7 @@ data class ChatListModel(
     val time: String,
     val profileUrl: String,
     val unread: Int? = null,
-    val pinned: Boolean = false
+    val pinned: Boolean = false,
+    val isOnline: Boolean? = null,
+    val lastOnline: Date? = null
 )

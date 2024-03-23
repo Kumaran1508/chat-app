@@ -18,4 +18,5 @@ interface MessageRepository {
     suspend fun addOnQueueListener(onQueue: Emitter.Listener)
     suspend fun onDelivered(deliveredModel: MessageDeliveredModel)
     suspend fun onRead(readModel: MessageReadModel)
+    suspend fun addOnUserUpdateListener(eventName: String, onUserUpdate: Emitter.Listener)
 }

@@ -9,7 +9,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
-import retrofit2.http.Path
+import retrofit2.http.PUT
 import retrofit2.http.Query
 
 interface AuthService {
@@ -22,7 +22,7 @@ interface AuthService {
     @POST("auth/login")
     suspend fun login(@Body user: AuthRequest): Response<AuthResponse>
 
-    @POST("user/update-profile")
+    @PUT("user/update-profile")
     suspend fun updateProfile(@Body profile: UpdateProfileRequest): Response<Boolean>
 
     @GET("user")

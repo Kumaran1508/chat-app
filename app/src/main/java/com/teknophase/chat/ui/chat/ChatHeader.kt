@@ -72,7 +72,7 @@ fun ChatHeader(username: String, displayName: String, profileUrl: String? = "", 
             )
 
             Text(
-                text = username,
+                text = about ?: "",
                 fontSize = text_small,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = padding_extra_small)

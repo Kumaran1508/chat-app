@@ -13,6 +13,7 @@ const val SOCKET_CLOSE: String = "close"
 const val SOCKET_CHAT_ACKNOWLEDGE: String = "acknowledge"
 const val SOCKET_CHAT_DELIVERED: String = "delivered"
 const val SOCKET_CHAT_READ: String = "read"
+const val SOCKET_USER_UPDATE: String = "userUpdate"
 
 class SocketMessageRepository : MessageRepository {
 
@@ -67,5 +68,12 @@ class SocketMessageRepository : MessageRepository {
 
     override suspend fun addOnQueueListener(onQueue: Emitter.Listener) {
         SocketManager.getSocket().on("queue", onQueue)
+    }
+
+    override suspend fun addOnUserUpdateListener(
+        eventName: String,
+        onUserUpdate: Emitter.Listener
+    ) {
+        SocketManager.getSocket().on(eventName, onUserUpdate)
     }
 }

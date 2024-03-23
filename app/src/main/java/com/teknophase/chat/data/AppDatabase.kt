@@ -1,6 +1,7 @@
 package com.teknophase.chat.data
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -12,7 +13,10 @@ import com.teknophase.chat.data.room.LocalMessageRepository
 import com.teknophase.chat.util.RoomTypeConvertors
 
 @Database(
-    version = 1,
+    version = 2,
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2)
+    ],
     entities = [Message::class, ChatListModel::class]
 )
 @TypeConverters(RoomTypeConvertors::class)
@@ -24,7 +28,6 @@ abstract class LocalDatabase : RoomDatabase() {
 
 object AppDatabase {
     var db: LocalDatabase? = null
-
     fun init(applicationContext: Context) {
         db = Room.databaseBuilder(
             applicationContext,
