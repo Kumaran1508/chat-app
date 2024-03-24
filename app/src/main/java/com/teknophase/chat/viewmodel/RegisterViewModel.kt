@@ -9,7 +9,7 @@ import androidx.lifecycle.ViewModel
 import com.teknophase.chat.data.request.RegisterRequest
 import com.teknophase.chat.data.request.UpdateProfileRequest
 import com.teknophase.chat.data.state.RegisterState
-import com.teknophase.chat.network.repositories.AuthRepository
+import com.teknophase.chat.network.repositories.interfaces.AuthRepository
 import com.teknophase.chat.util.getFormattedPhoneNumber
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers

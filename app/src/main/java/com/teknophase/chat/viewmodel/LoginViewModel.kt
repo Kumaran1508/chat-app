@@ -5,7 +5,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import com.teknophase.chat.data.request.AuthRequest
-import com.teknophase.chat.network.repositories.AuthRepository
+import com.teknophase.chat.network.repositories.interfaces.AuthRepository
 import com.teknophase.chat.providers.AuthState
 import com.teknophase.chat.providers.UserMetaData
 import dagger.hilt.android.lifecycle.HiltViewModel

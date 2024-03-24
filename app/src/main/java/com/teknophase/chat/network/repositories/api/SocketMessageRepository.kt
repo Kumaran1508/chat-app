@@ -1,10 +1,11 @@
-package com.teknophase.chat.network.repositories
+package com.teknophase.chat.network.repositories.api
 
 import com.google.gson.Gson
 import com.teknophase.chat.data.model.MessageDeliveredModel
 import com.teknophase.chat.data.model.MessageReadModel
 import com.teknophase.chat.data.request.MessageRequest
 import com.teknophase.chat.network.SocketManager
+import com.teknophase.chat.network.repositories.interfaces.MessageRepository
 import io.socket.emitter.Emitter
 
 const val SOCKET_CHAT_MESSAGE: String = "chat"

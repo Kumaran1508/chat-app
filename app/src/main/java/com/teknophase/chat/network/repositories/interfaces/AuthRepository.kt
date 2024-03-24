@@ -1,4 +1,4 @@
-package com.teknophase.chat.network.repositories
+package com.teknophase.chat.network.repositories.interfaces
 
 import com.teknophase.chat.data.request.AuthRequest
 import com.teknophase.chat.data.request.RegisterRequest

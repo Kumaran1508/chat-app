@@ -1,4 +1,4 @@
-package com.teknophase.chat.network.repositories
+package com.teknophase.chat.network.repositories.interfaces
 
 import com.teknophase.chat.data.model.MessageDeliveredModel
 import com.teknophase.chat.data.model.MessageReadModel
@@ -7,9 +7,7 @@ import io.socket.emitter.Emitter
 
 interface MessageRepository {
     suspend fun sendMessage(message: MessageRequest)
-
     suspend fun addOnChatListener(onChatMessage: Emitter.Listener)
-
     suspend fun addOnMessageListener(onMessage: Emitter.Listener)
     suspend fun addOnCloseListener(onClose: Emitter.Listener)
     suspend fun addOnAcknowledgeListener(onAcknowledge: Emitter.Listener)

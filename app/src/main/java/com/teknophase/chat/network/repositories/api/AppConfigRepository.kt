@@ -1,4 +1,4 @@
-package com.teknophase.chat.network.repositories
+package com.teknophase.chat.network.repositories.api
 
 import com.teknophase.chat.network.services.AppConfigService
 import javax.inject.Inject

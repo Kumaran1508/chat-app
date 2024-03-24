@@ -45,13 +45,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.teknophase.chat.R
-import com.teknophase.chat.data.request.AuthRequest
-import com.teknophase.chat.data.request.RegisterRequest
-import com.teknophase.chat.data.request.UpdateProfileRequest
-import com.teknophase.chat.data.response.AuthResponse
-import com.teknophase.chat.data.response.UserResponse
 import com.teknophase.chat.navigation.BottomNavRoutes
-import com.teknophase.chat.network.repositories.AuthRepository
+import com.teknophase.chat.network.repositories.mock.MockAuthRepository
 import com.teknophase.chat.ui.common.PrimaryButton
 import com.teknophase.chat.ui.common.SecondaryButton
 import com.teknophase.chat.ui.constants.FULL_WEIGHT
@@ -224,32 +219,7 @@ fun RegistrationScreen(
 fun RegistrationScreenPreview() {
     ChatTheme {
         RegistrationScreen(
-            viewModel = RegisterViewModel(object : AuthRepository {
-                override suspend fun login(user: AuthRequest): AuthResponse {
-                    TODO("Not yet implemented")
-                }
-
-                override suspend fun register(user: RegisterRequest): Boolean {
-                    TODO("Not yet implemented")
-                }
-
-                override suspend fun checkUsernameAvailability(username: String): Boolean {
-                    TODO("Not yet implemented")
-                }
-
-                override suspend fun updateUserProfile(profileRequest: UpdateProfileRequest): Boolean {
-                    TODO("Not yet implemented")
-                }
-
-                override suspend fun getUserProfile(username: String): UserResponse {
-                    TODO("Not yet implemented")
-                }
-
-                override suspend fun getUserProfileById(id: String): UserResponse {
-                    TODO("Not yet implemented")
-                }
-
-            }),
+            viewModel = RegisterViewModel(MockAuthRepository()),
             onNavigate = {},
             onNavigateBack = {}
         )

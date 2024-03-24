@@ -24,7 +24,6 @@ object SocketManager {
                 // Add headers to the options
                 val headers = HashMap<String, List<String>>()
                 headers["Authorization"] = listOf("Bearer ${AuthState.getToken()}")
-//                headers["Authorization"] = "Bearer ${AuthState.getToken()}"
 
                 options.extraHeaders = headers
 
@@ -53,14 +52,3 @@ object SocketManager {
         return socket!!
     }
 }
-
-// Todo: Not needed anymore?
-//class CustomSocket(val io: Manager, val nsp: String, val opts: Manager.Options) :
-//    Socket(io, nsp, opts) {
-//    override fun emit(event: String?, vararg args: Any?): Emitter {
-//        val requestBuilder = Request.Builder().url(nsp)
-//        requestBuilder.addHeader("Authorization", "Bearer ${AuthState.getToken()}")
-//        opts.callFactory.newCall(requestBuilder.build())
-//        return super.emit(event, *args)
-//    }
-//}

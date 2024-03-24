@@ -9,11 +9,11 @@ import com.teknophase.chat.data.model.MessageStatus
 import com.teknophase.chat.data.model.MessageStatusDeserializer
 import com.teknophase.chat.data.model.MessageType
 import com.teknophase.chat.data.model.MessageTypeDeserializer
-import com.teknophase.chat.network.repositories.ApiAuthRepository
-import com.teknophase.chat.network.repositories.AppConfigRepository
-import com.teknophase.chat.network.repositories.AuthRepository
-import com.teknophase.chat.network.repositories.MessageRepository
-import com.teknophase.chat.network.repositories.SocketMessageRepository
+import com.teknophase.chat.network.repositories.api.ApiAuthRepository
+import com.teknophase.chat.network.repositories.api.AppConfigRepository
+import com.teknophase.chat.network.repositories.interfaces.AuthRepository
+import com.teknophase.chat.network.repositories.interfaces.MessageRepository
+import com.teknophase.chat.network.repositories.api.SocketMessageRepository
 import com.teknophase.chat.network.services.AppConfigService
 import com.teknophase.chat.network.services.AuthService
 import com.teknophase.chat.viewmodel.BootstrapViewModel

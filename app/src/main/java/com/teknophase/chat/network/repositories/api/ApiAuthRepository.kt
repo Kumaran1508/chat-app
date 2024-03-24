@@ -1,10 +1,11 @@
-package com.teknophase.chat.network.repositories
+package com.teknophase.chat.network.repositories.api
 
 import com.teknophase.chat.data.request.AuthRequest
 import com.teknophase.chat.data.request.RegisterRequest
 import com.teknophase.chat.data.request.UpdateProfileRequest
 import com.teknophase.chat.data.response.AuthResponse
 import com.teknophase.chat.data.response.UserResponse
+import com.teknophase.chat.network.repositories.interfaces.AuthRepository
 import com.teknophase.chat.network.services.AuthService
 import javax.inject.Inject
 
