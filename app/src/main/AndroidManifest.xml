@@ -4,6 +4,10 @@
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <application
         android:name=".ChatApplication"
@@ -30,7 +34,13 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Chat"/>
+            android:theme="@style/Theme.Chat" />
+
+        <service
+            android:name=".process.MessageBackgroundService"
+            android:isolatedProcess="true"
+            android:stopWithTask="false" />
+        <receiver android:name=".process.ReplyReceiver" />
     </application>
 
 </manifest>

@@ -1,5 +1,6 @@
 package com.teknophase.chat.viewmodel
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -28,8 +29,10 @@ import com.teknophase.chat.network.repositories.api.SOCKET_CHAT_MESSAGE
 import com.teknophase.chat.network.repositories.api.SOCKET_CHAT_READ
 import com.teknophase.chat.network.repositories.api.SOCKET_USER_UPDATE
 import com.teknophase.chat.providers.AuthState
+import com.teknophase.chat.util.NotificationHelper
 import com.teknophase.chat.util.getFormattedTimeForMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.socket.client.Socket
 import io.socket.emitter.Emitter
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +50,9 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val messageRepository: MessageRepository,
     private val authRepository: AuthRepository,
-    private val gson: Gson
+    private val gson: Gson,
+    val notificationHelper: NotificationHelper,
+    @ApplicationContext private val context: Context
 ) :
     ViewModel() {
     private var _chatState: MutableStateFlow<ChatState> = MutableStateFlow(ChatState())
@@ -150,6 +155,9 @@ class HomeViewModel @Inject constructor(
                 message = message.copy(receivedAt = Date(), delivered = true)
 
                 handleMessageReceive(message)
+
+                //Notify message
+                notificationHelper.showNotification(context = context, message = message.content, sender = message.source)
 
             } catch (e: Exception) {
                 Log.e("MessageParseError", "Unable to parse received message" + e.message)

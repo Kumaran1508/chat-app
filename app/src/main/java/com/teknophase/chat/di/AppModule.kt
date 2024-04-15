@@ -1,5 +1,6 @@
 package com.teknophase.chat.di
 
+import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.teknophase.chat.config.AppConfig
@@ -16,12 +17,14 @@ import com.teknophase.chat.network.repositories.interfaces.MessageRepository
 import com.teknophase.chat.network.repositories.api.SocketMessageRepository
 import com.teknophase.chat.network.services.AppConfigService
 import com.teknophase.chat.network.services.AuthService
+import com.teknophase.chat.util.NotificationHelper
 import com.teknophase.chat.viewmodel.BootstrapViewModel
 import com.teknophase.chat.viewmodel.HomeViewModel
 import com.teknophase.chat.viewmodel.LoginViewModel
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
@@ -52,13 +55,23 @@ object AppModule {
     fun providesHomeViewModel(
         messageRepository: MessageRepository,
         gson: Gson,
-        authRepository: AuthRepository
+        authRepository: AuthRepository,
+        @ApplicationContext context: Context,
+        notificationHelper: NotificationHelper
     ): HomeViewModel {
         return HomeViewModel(
             messageRepository = messageRepository,
             gson = gson,
-            authRepository = authRepository
+            authRepository = authRepository,
+            context = context,
+            notificationHelper = notificationHelper
         )
+    }
+
+    @Provides
+    @Singleton
+    fun providesNotificationHelper() : NotificationHelper {
+        return NotificationHelper()
     }
 
     @Provides

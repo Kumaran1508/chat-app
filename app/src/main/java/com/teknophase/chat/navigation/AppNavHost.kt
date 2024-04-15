@@ -28,6 +28,7 @@ import com.teknophase.chat.ui.common.AppTopBar
 import com.teknophase.chat.ui.constants.size_64
 import com.teknophase.chat.ui.screens.ChatListScreen
 import com.teknophase.chat.ui.screens.ChatScreen
+import com.teknophase.chat.ui.screens.ProfileScreen
 
 @Composable
 fun AppNavHost() {
@@ -83,7 +84,7 @@ fun AppNavHost() {
             ) {
                 composable(BottomNavRoutes.CHAT.route) { ChatListScreen(navController = navController) }
                 composable(BottomNavRoutes.CALLS.route) { ChatListScreen(navController = navController) }
-                composable(BottomNavRoutes.PROFILE.route) { ChatListScreen(navController = navController) }
+                composable(BottomNavRoutes.PROFILE.route) { ProfileScreen() }
             }
 
             composable(AppNavRoutes.LOGIN.route) {
