@@ -22,3 +22,6 @@ val onBackground = Color(0xFF888888)
 val errorRed = Color(0xFFB3261E)
 val successGreen = Color(0xFF4CAF50)
 val progressBarTrackColor = Color(0xFFD9D9D9)
+
+// Settings Item
+val orange = Color(0xFFFC7900)
