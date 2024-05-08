@@ -12,5 +12,6 @@ enum class AppNavRoutes(val title: String, val route: String) {
     LOGIN("Login", "login"),
     BOTTOM_NAVIGATION("Home Navigation", "bottom_navigation_home"),
     REGISTER("Register", "register"),
-    CHAT("Chat", "chat-user/{username}")
+    CHAT("Chat", "chat-user/{username}"),
+    CONTACTS("Contacts", "contacts")
 }

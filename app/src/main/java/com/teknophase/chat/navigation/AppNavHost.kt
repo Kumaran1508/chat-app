@@ -28,6 +28,7 @@ import com.teknophase.chat.ui.common.AppTopBar
 import com.teknophase.chat.ui.constants.size_64
 import com.teknophase.chat.ui.screens.ChatListScreen
 import com.teknophase.chat.ui.screens.ChatScreen
+import com.teknophase.chat.ui.screens.ContactsScreen
 import com.teknophase.chat.ui.screens.ProfileScreen
 
 @Composable
@@ -113,6 +114,12 @@ fun AppNavHost() {
                 ChatScreen(username = username, onBack = {
                     navController.popBackStack()
                 })
+            }
+
+            composable(
+                AppNavRoutes.CONTACTS.route
+            ) {
+                ContactsScreen()
             }
         }
     }

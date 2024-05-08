@@ -39,7 +39,7 @@ fun AppTopBar(
     TopAppBar(
         title = { Text(title) },
         actions = {
-            IconButton(onClick = { /*TODO*/ }) {
+            IconButton(onClick = { onNavigate(AppNavRoutes.CONTACTS.route) }) {
                 Icon(imageVector = Icons.Filled.Add, contentDescription = null)
             }
             IconButton(onClick = { showOptionMenu = !showOptionMenu }) {
