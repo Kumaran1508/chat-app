@@ -16,3 +16,13 @@ fun String.containsAny(strings: List<String>): Boolean {
     }
     return false
 }
+
+fun String.getFirstWord(): String {
+    val trimmedString = this.trim() // Remove leading and trailing whitespaces
+    val firstSpaceIndex = trimmedString.indexOf(' ') // Find the index of the first space
+    return if (firstSpaceIndex != -1) {
+        trimmedString.substring(0, firstSpaceIndex) // Extract the substring before the first space
+    } else {
+        trimmedString // If no space found, return the entire string
+    }
+}
