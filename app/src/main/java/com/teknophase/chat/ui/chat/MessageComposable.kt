@@ -2,11 +2,14 @@ package com.teknophase.chat.ui.chat
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -15,14 +18,24 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.End
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.consumePositionChange
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.teknophase.chat.R
 import com.teknophase.chat.data.model.Message
 import com.teknophase.chat.data.model.MessageDestinationType
@@ -38,18 +51,50 @@ import com.teknophase.chat.ui.theme.ChatTheme
 import com.teknophase.chat.ui.theme.errorRed
 import com.teknophase.chat.util.getFormattedTimeForMessage
 import java.util.Date
+import kotlin.math.absoluteValue
 
 @Composable
 fun MessageComposable(message: Message, isSent: Boolean, modifier: Modifier = Modifier) {
     val backgroundColor =
         if (isSent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+    var swipeOffset by remember { mutableFloatStateOf(0f) }
+
+    val context = LocalContext.current
+    val screenWidth = with(LocalDensity.current) { context.resources.displayMetrics.widthPixels.toDp() }
+    val dragThreshold = screenWidth * 0.35f
+
     Row(
         verticalAlignment = Alignment.Bottom,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        swipeOffset = 0f
+                    },
+                    onDragCancel = {
+                        swipeOffset = 0f
+                    },
+                    onHorizontalDrag = { change, dragAmount ->
+                        // Check if drag amount exceeds the threshold
+                        if (dragAmount.absoluteValue <= dragThreshold.value
+                            && swipeOffset <= dragThreshold.value) {
+                            swipeOffset += (dragAmount / screenWidth.value) * 100
+                            change.consume()
+                        }
+                        if (dragAmount.absoluteValue >= dragThreshold.value) {
+                            when(dragAmount) {
+                                
+                            }
+                        }
+                    }
+                )
+            },
         horizontalArrangement = if (isSent) Arrangement.End else Arrangement.Start
     ) {
         Column(
             modifier = Modifier
+                .offset(x = swipeOffset.dp)
                 .background(color = backgroundColor, shape = RoundedCornerShape(size_08))
                 .padding(padding_small)
                 .widthIn(min = size_100, max = size_300)

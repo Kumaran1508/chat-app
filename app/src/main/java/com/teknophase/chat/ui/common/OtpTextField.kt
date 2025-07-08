@@ -49,7 +49,7 @@ fun OtpTextField(
     LaunchedEffect(Unit) {
         if (otpText.length > otpCount) {
             keyboardController?.hide()
-            throw IllegalArgumentException("Otp text value must not have more than otpCount: $otpCount characters")
+            throw IllegalArgumentException("Otp text value must not have more than $otpCount characters")
         }
     }
 
